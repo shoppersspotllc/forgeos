@@ -1,0 +1,63 @@
+version: '3.8'
+
+# ForgeOS v2.0 — Portable AI Agent Factory
+# Runs on any machine: MacBook, home PC, VPS, cloud
+# No hardcoded paths. All config via environment.
+
+services:
+  dashboard:
+    build:
+      context: ./apps/dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "${DASHBOARD_PORT:-3456}:3456"
+    environment:
+      - OLLAMA_ENDPOINT=http://ollama:11434
+      - FORGEOS_AI_ENDPOINT=http://forgeos-ai:8788
+      - FORGEOS_HOME=/forgeos
+    volumes:
+      - forgeos-data:/forgeos/data
+      - forgeos-config:/forgeos/config
+    depends_on:
+      - ollama
+    restart: unless-stopped
+    networks:
+      - forgeos-net
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - forgeos-net
+    # GPU support: uncomment for NVIDIA
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # ForgeOS AI gateway — plug in your implementation
+  # forgeos-ai:
+  #   build: ./services/forgeos-ai
+  #   ports:
+  #     - "8788:8788"
+  #   networks:
+  #     - forgeos-net
+
+volumes:
+  forgeos-data:
+    driver: local
+  forgeos-config:
+    driver: local
+  ollama-data:
+    driver: local
+
+networks:
+  forgeos-net:
+    driver: bridge

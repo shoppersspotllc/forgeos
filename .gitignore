@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Runtime data
+data/
+*.sqlite
+*.sqlite-journal
+*.log
+
+# Secrets - NEVER commit
+.env
+.env*.local
+secrets/
+*.pem
+*.key
+credentials*.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Terminal sessions
+services/terminal/node_modules/

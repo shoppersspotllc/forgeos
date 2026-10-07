@@ -1,0 +1,1 @@
+{"description":"ForgeOS AI — canonical model gateway and provider layer","main":"gateway.mjs","name":"forgeos-ai-gateway","scripts":{"start":"node gateway.mjs"},"type":"module","version":"2.0.0"}
