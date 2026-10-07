@@ -46,15 +46,25 @@ function trace(task: Task, stage: string, detail: string) {
 async function museRoute(taskText: string, task: Task): Promise<{ dot: string; action: string; provider: string; model: string } | null> {
   trace(task, 'muse-routing', 'Muse: consulting ForgeOS AI gateway for routing decision');
 
-  const systemPrompt = `You are the Muse executive router for ForgeOS. Given a user task, decide which Dot should handle it.
+  const systemPrompt = `You are the Muse executive router for ForgeOS. Classify the user task.
 
-Available Dots:
-- monitor: checks system health, gateway status, provider status. Use for: health, status, providers, uptime, monitoring.
-- scout: lists capabilities, discovers what's available. Use for: capabilities, features, what can you do, list.
+RULES:
+1. Read the task carefully.
+2. Decide if it is about SYSTEM HEALTH/MONITORING or CAPABILITIES/DISCOVERY.
+3. If it is about anything else (cooking, weather, jokes, general chat, etc.), you MUST return {"dot": null}.
+4. Do NOT guess. Do NOT pick a dot for unrelated tasks.
 
-Respond with ONLY a JSON object: {"dot": "monitor"|"scout", "action": "gateway-health"|"list-capabilities"}
-If the task matches NEITHER dot, respond with ONLY: {"dot": null}
+Monitor Dot handles ONLY: health checks, status, providers, uptime, monitoring, system health.
+Scout Dot handles ONLY: capabilities list, features, what can you do, discovery.
 
+Examples:
+- "check gateway health" → {"dot": "monitor", "action": "gateway-health"}
+- "what can you do" → {"dot": "scout", "action": "list-capabilities"}
+- "bake a cake" → {"dot": null}
+- "tell me a joke" → {"dot": null}
+- "what's the weather" → {"dot": null}
+
+Respond with ONLY the JSON object, nothing else.
 Task: "${taskText}"`;
 
   try {
@@ -67,6 +77,7 @@ Task: "${taskText}"`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: taskText },
         ],
+        model: 'llama3.2:1b',
         temperature: 0.1,
         max_tokens: 100,
       }),
