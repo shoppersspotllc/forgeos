@@ -2,35 +2,44 @@
 
 import { 
   Terminal, Users, Globe, DollarSign, Eye, 
-  Crosshair, Sparkles, HeartPulse, Code2, Cpu, Palette, GitBranch
+  Crosshair, Sparkles, HeartPulse, Code2, Cpu, Palette, GitBranch, Zap
 } from 'lucide-react';
 
 export type View = 
   | 'command' | 'youngmoney' | 'godseye' | 'positionai' | 'mydots'
   | 'chrome' | 'github' | 'opencode' | 'claude' | 'colibri'
-  | 'canva' | 'forgeai' | 'health' | 'mediaengine';
+  | 'canva' | 'forgeai' | 'health' | 'mediaengine' | 'tasks';
 
-const primaryItems = [
-  { id: 'command' as View, label: 'Forge Dashboard', icon: Terminal },
-  { id: 'youngmoney' as View, label: 'Young Money', icon: DollarSign },
-  { id: 'godseye' as View, label: "God's Eye", icon: Eye },
-  { id: 'positionai' as View, label: 'Position AI', icon: Crosshair },
-  { id: 'mydots' as View, label: 'My Dots', icon: Users },
-  { id: 'chrome' as View, label: 'Google Chrome', icon: Globe },
-  { id: 'github' as View, label: 'GitHub', icon: GitBranch },
+interface NavItem {
+  id: View;
+  label: string;
+  icon: any;
+  href?: string;
+  external?: boolean;
+}
+
+const primaryItems: NavItem[] = [
+  { id: 'command', label: 'Forge Dashboard', icon: Terminal },
+  { id: 'youngmoney', label: 'Young Money', icon: DollarSign },
+  { id: 'godseye', label: "God's Eye", icon: Eye, href: 'http://100.87.82.46:4173', external: true },
+  { id: 'positionai', label: 'Position AI', icon: Crosshair },
+  { id: 'mydots', label: 'My Dots', icon: Users },
+  { id: 'tasks', label: 'Tasks', icon: Zap },
+  { id: 'chrome', label: 'Google Chrome', icon: Globe },
+  { id: 'github', label: 'GitHub', icon: GitBranch },
 ];
 
-const platformItems = [
-  { id: 'opencode' as View, label: 'OpenCode', icon: Code2 },
-  { id: 'claude' as View, label: 'Claude Code', icon: Terminal },
-  { id: 'colibri' as View, label: 'Colibrì', icon: Cpu },
-  { id: 'canva' as View, label: 'Canva', icon: Palette },
+const platformItems: NavItem[] = [
+  { id: 'opencode', label: 'OpenCode', icon: Code2 },
+  { id: 'claude', label: 'Claude Code', icon: Terminal },
+  { id: 'colibri', label: 'Colibrì', icon: Cpu },
+  { id: 'canva', label: 'Canva', icon: Palette },
 ];
 
-const trailItems = [
-  { id: 'forgeai' as View, label: 'Forge AI', icon: Sparkles },
-  { id: 'mediaengine' as View, label: 'Media Engine', icon: Palette },
-  { id: 'health' as View, label: 'Health', icon: HeartPulse },
+const trailItems: NavItem[] = [
+  { id: 'forgeai', label: 'Forge AI', icon: Sparkles },
+  { id: 'mediaengine', label: 'Media Engine', icon: Palette },
+  { id: 'health', label: 'Health', icon: HeartPulse },
 ];
 
 interface Props {
@@ -39,7 +48,7 @@ interface Props {
 }
 
 function Section({ title, items, currentView, onViewChange }: { 
-  title: string; items: typeof primaryItems; currentView: View; onViewChange: (v: View) => void 
+  title: string; items: NavItem[]; currentView: View; onViewChange: (v: View) => void 
 }) {
   return (
     <div className="mb-6">
@@ -51,7 +60,7 @@ function Section({ title, items, currentView, onViewChange }: {
         return (
           <button
             key={item.id}
-            onClick={() => onViewChange(item.id)}
+            onClick={() => item.external && item.href ? window.open(item.href, '_blank') : onViewChange(item.id)}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 hover:translate-x-1"
             style={{
               background: active ? 'var(--accent-glow)' : 'transparent',
