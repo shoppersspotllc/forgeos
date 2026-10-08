@@ -1,84 +1,104 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
-  GlassPanel, SectionHeader, FadeUp, StatusPill, CinematicBackground, AnimatedNumber,
+  GlassPanel, SectionHeader, FadeUp, CinematicBackground, GlowButton, StatusPill,
 } from '@/components/design-system';
-import { Eye, Radar, Globe2, Activity, ShieldCheck } from 'lucide-react';
+import { Eye, ExternalLink, Info, MonitorSmartphone, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+
+const GODS_EYE_URL = 'http://100.87.82.46:4173';
 
 export function GodsEyeView() {
-  const [caps, setCaps] = useState<any>(null);
+  const [checking, setChecking] = useState(false);
+  const [reachable, setReachable] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    fetch('/api/capabilities').then(r => r.json()).then(setCaps).catch(() => {});
-  }, []);
+  const openGodsEye = () => {
+    window.open(GODS_EYE_URL, '_blank', 'noopener');
+  };
 
-  const capabilities = caps?.capabilities || [];
-  const online = capabilities.filter((c: any) => c.available).length;
+  const checkStatus = async () => {
+    setChecking(true);
+    setReachable(null);
+    try {
+      // Probe via same-origin API to avoid CORS issues; falls back to unknown
+      const res = await fetch('/api/godseye/status', { signal: AbortSignal.timeout(8000) });
+      const data = await res.json();
+      setReachable(data.reachable === true);
+    } catch {
+      setReachable(null);
+    }
+    setChecking(false);
+  };
 
   return (
     <div className="relative min-h-full">
       <CinematicBackground identityId="godseye" />
-      <div className="relative p-8 max-w-7xl mx-auto">
+      <div className="relative p-4 sm:p-8 max-w-4xl mx-auto">
         <FadeUp>
           <SectionHeader
             eyebrow="Omniscient Monitor"
             title="God's Eye"
-            description="Real-time intelligence and surveillance across the ForgeOS platform. Every capability, every Dot, every system — watched."
+            description="Live visual command view of your entire operation. Opens the actual God's Eye application."
             accent="#06b6d4"
           />
         </FadeUp>
 
-        <div className="grid md:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: 'Capabilities Watched', value: capabilities.length, icon: Eye },
-            { label: 'Online', value: online, icon: Activity },
-            { label: 'Offline', value: capabilities.length - online, icon: Radar },
-            { label: 'Registry Health', value: 100, suffix: '%', icon: ShieldCheck },
-          ].map((s, i) => (
-            <FadeUp key={s.label} delay={i * 70}>
-              <GlassPanel glow="#06b6d4">
-                <s.icon className="h-5 w-5 mb-3" style={{ color: '#06b6d4' }} />
-                <p className="text-3xl font-extrabold" style={{ color: 'var(--text)' }}>
-                  <AnimatedNumber value={s.value} />{s.suffix && <span className="text-lg">{s.suffix}</span>}
-                </p>
-                <p className="text-xs uppercase tracking-widest font-semibold mt-1" style={{ color: 'var(--text-muted)' }}>{s.label}</p>
-              </GlassPanel>
-            </FadeUp>
-          ))}
-        </div>
+        <FadeUp delay={100}>
+          <GlassPanel glow="#06b6d4" className="text-center py-10 sm:py-12 px-4">
+            <div className="h-16 w-16 mx-auto mb-6 rounded-3xl flex items-center justify-center"
+                 style={{ background: 'linear-gradient(135deg,#06b6d4,#3b82f6)', boxShadow: '0 12px 32px rgba(6,182,212,0.4)' }}>
+              <Eye className="h-8 w-8 text-white" />
+            </div>
+            <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--text)' }}>
+              Open God's Eye View
+            </h3>
+            <p className="text-sm mb-2 max-w-md mx-auto" style={{ color: 'var(--text-secondary)' }}>
+              ForgeOS launches the real God's Eye application in a new tab —
+              your live operational overview, running on the paired workstation.
+            </p>
+            <p className="text-xs font-mono mb-6" style={{ color: 'var(--text-muted)' }}>
+              {GODS_EYE_URL}
+            </p>
 
-        <FadeUp delay={150}>
-          <h3 className="font-bold mb-3 flex items-center gap-2" style={{ color: 'var(--text)' }}>
-            <Radar className="h-4 w-4" style={{ color: '#06b6d4' }} /> Live Capability Surveillance
-          </h3>
-        </FadeUp>
-        <div className="grid md:grid-cols-2 gap-2">
-          {capabilities.map((c: any, i: number) => (
-            <FadeUp key={c.id} delay={i * 30}>
-              <GlassPanel padding="p-3" hover>
-                <div className="flex items-center gap-3">
-                  <span className="h-2 w-2 rounded-full animate-pulse shrink-0"
-                        style={{
-                          background: c.available ? 'var(--success)' : 'var(--text-muted)',
-                          boxShadow: c.available ? '0 0 8px var(--success)' : 'none',
-                        }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: 'var(--text)' }}>{c.name}</p>
-                    <p className="text-[11px] font-mono" style={{ color: 'var(--text-muted)' }}>{c.id} · {c.category}</p>
-                  </div>
-                  <StatusPill status={c.available ? 'online' : 'offline'} />
-                </div>
-              </GlassPanel>
-            </FadeUp>
-          ))}
-        </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <GlowButton onClick={openGodsEye}>
+                Launch God's Eye <ExternalLink className="h-4 w-4 ml-1 inline" />
+              </GlowButton>
+              <button
+                onClick={checkStatus}
+                disabled={checking}
+                className="text-sm font-medium px-4 py-2.5 rounded-xl transition-all hover:scale-[1.02] disabled:opacity-50 min-h-[44px]"
+                style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)', background: 'var(--surface)' }}
+              >
+                {checking ? <Loader2 className="h-4 w-4 animate-spin inline" /> : 'Check status'}
+              </button>
+            </div>
 
-        <FadeUp delay={200}>
-          <GlassPanel className="mt-6 flex items-center gap-3">
-            <Globe2 className="h-5 w-5" style={{ color: '#06b6d4' }} />
-            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-              God's Eye performs live probes — no cached or fabricated status. Every reading above is a real-time check.
+            {reachable !== null && (
+              <div className="mt-4 flex justify-center">
+                <StatusPill status={reachable ? 'online' : 'offline'} />
+              </div>
+            )}
+            {reachable === false && (
+              <p className="text-xs mt-3 flex items-center justify-center gap-2" style={{ color: 'var(--warning)' }}>
+                <XCircle className="h-3.5 w-3.5" />
+                God's Eye isn't responding. Make sure the app is running on the paired workstation.
+              </p>
+            )}
+            {reachable === true && (
+              <p className="text-xs mt-3 flex items-center justify-center gap-2" style={{ color: 'var(--success)' }}>
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                God's Eye is live and responding.
+              </p>
+            )}
+
+            <p className="text-xs mt-6 flex items-center justify-center gap-2 px-2" style={{ color: 'var(--text-muted)' }}>
+              <MonitorSmartphone className="h-3.5 w-3.5 shrink-0" />
+              <span>Opens in a new tab — works from phone, tablet, or desktop.</span>
+            </p>
+            <p className="text-xs mt-2 flex items-center justify-center gap-2 px-2" style={{ color: 'var(--text-muted)' }}>
+              <Info className="h-3.5 w-3.5 shrink-0" />
+              <span>Requires the God's Eye app running on your local network (Tailscale).</span>
             </p>
           </GlassPanel>
         </FadeUp>
