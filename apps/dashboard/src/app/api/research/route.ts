@@ -45,35 +45,34 @@ function getIp(req: NextRequest): string {
 // --- Capability implementations ---
 
 async function webSearch(query: string, limit: number = 10) {
-  // Use DuckDuckGo HTML (no API key, free)
-  const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+  // Use Bing HTML (no API key, free, datacenter-friendly)
+  const url = `https://www.bing.com/search?q=${encodeURIComponent(query)}&count=20`;
   const res = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ForgeOS-Research/1.0)' },
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html',
+      'Accept-Language': 'en-US,en;q=0.9',
+    },
     signal: AbortSignal.timeout(12000),
   });
   if (!res.ok) throw new Error(`Search failed: ${res.status}`);
   const html = await res.text();
   
   const results: Array<{title: string; url: string; snippet: string}> = [];
-  const linkRe = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
-  const snippetRe = /<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>/;
+  // Bing organic results: <li class="b_algo"><h2><a href="URL">Title</a></h2>...<p>Snippet</p>
+  const algoRe = /<li class="b_algo"[^>]*>[\s\S]*?<h2><a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a><\/h2>([\s\S]*?)<\/li>/g;
   
   let m;
   let count = 0;
-  while ((m = linkRe.exec(html)) !== null && count < limit) {
+  while ((m = algoRe.exec(html)) !== null && count < limit) {
     const rawUrl = m[1];
-    // DuckDuckGo wraps URLs; extract actual
-    const urlMatch = rawUrl.match(/[?&]uddg=([^&]+)/);
-    const cleanUrl = urlMatch ? decodeURIComponent(urlMatch[1]) : rawUrl;
     const title = m[2].replace(/<[^>]+>/g, '').trim();
+    const snippetHtml = m[3];
+    const pMatch = snippetHtml.match(/<p>([\s\S]*?)<\/p>/);
+    const snippet = pMatch ? pMatch[1].replace(/<[^>]+>/g, '').trim().substring(0, 300) : '';
     
-    // Find snippet after this link
-    const afterLink = html.substring(m.index, m.index + 2000);
-    const sMatch = afterLink.match(/class="result__snippet"[^>]*>([\s\S]*?)<\/a>/);
-    const snippet = sMatch ? sMatch[1].replace(/<[^>]+>/g, '').trim().substring(0, 300) : '';
-    
-    if (title && cleanUrl.startsWith('http')) {
-      results.push({ title: title.substring(0, 200), url: cleanUrl.substring(0, 500), snippet });
+    if (title && rawUrl.startsWith('http') && !rawUrl.includes('bing.com')) {
+      results.push({ title: title.substring(0, 200), url: rawUrl.substring(0, 500), snippet });
       count++;
     }
   }
