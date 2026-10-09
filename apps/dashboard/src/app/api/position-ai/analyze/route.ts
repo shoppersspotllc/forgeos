@@ -1,6 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export const maxDuration = 60;
+// Phase 2.1: Minimal in-memory rate limiter (per-instance, not distributed)
+// For distributed protection, use Vercel KV/Upstash in future.
+const __rateBuckets = new Map();
+function __checkRate(key, maxReq, windowMs) {
+  const now = Date.now();
+  const b = __rateBuckets.get(key);
+  if (!b || now >= b.resetAt) {
+    __rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  if (b.count >= maxReq) return false;
+  b.count++;
+  return true;
+}
+function __getIp(req) {
+  const fwd = req.headers.get('x-forwarded-for');
+  if (fwd) return fwd.split(',')[0].trim();
+  const real = req.headers.get('x-real-ip');
+  if (real) return real.trim();
+  return 'unknown';
+}
+
 
 /**
  * Position AI — Strategic Intelligence API
@@ -27,6 +49,14 @@ const POSITION_SYSTEM_PROMPT =
   'You are Position AI, a strategic intelligence analyst for ForgeOS. Provide concise strategic positioning analysis.';
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 30 req/min per IP
+  const __ip = __getIp(req);
+  if (!__checkRate('rl:' + __ip, 30, 60000)) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', retryAfter: 60 },
+      { status: 429, headers: { 'Retry-After': '60' } }
+    );
+  }
   let body: any = {};
   try {
     body = await req.json();
