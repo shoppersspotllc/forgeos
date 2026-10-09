@@ -62,5 +62,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  return gatewayChat(body);
+  // Phase 4: Pass consumer identity for observability (server-side logging)
+  return gatewayChat(body, { keyId: auth.keyId, consumerName: auth.name });
 }
