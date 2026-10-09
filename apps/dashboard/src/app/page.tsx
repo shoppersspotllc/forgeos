@@ -6,6 +6,7 @@ import { ColibriView } from '@/components/views/ColibriView';
 import { CanvaView } from '@/components/views/CanvaView';
 import { CommandView } from '@/components/views/CommandView';
 import { MyDotsView } from '@/components/views/MyDotsView';
+import { WorkforceView } from '@/components/views/WorkforceView';
 import { TasksView } from '@/components/views/TasksView';
 import { ForgeAIView } from '@/components/views/ForgeAIView';
 import { YoungMoneyView } from '@/components/views/YoungMoneyView';
@@ -58,6 +59,7 @@ export default function Home() {
     switch (view) {
       case 'command': return <CommandView onNavigate={(v: string) => setView(v as View)} />;
       case 'mydots': return <MyDotsView />;
+      case 'workforce': return <WorkforceView />;
       case 'tasks': return <TasksView />;
       case 'colibri': return <ColibriView />;
       case 'canva': return <CanvaView />;
