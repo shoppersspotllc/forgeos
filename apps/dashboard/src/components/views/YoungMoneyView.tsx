@@ -15,7 +15,6 @@ type Engine = 'overview' | 'pindrop' | 'affiliate' | 'quant';
 // Real state from ForgeOS memory (2026-10-05/06)
 const PINDROP = {
   status: 'ACTIVE',
-  website: 'https://pindrop.shoppersspotllc.com',
   prospects: [
     { name: 'Midair', score: '75/75', rank: 1, note: 'Top target — outreach HELD' },
     { name: 'Prospect 2', score: '68/75', rank: 2, note: 'Verified TX HVAC' },
@@ -42,18 +41,17 @@ const AFFILIATE = {
   ],
   compliance: '11/11 PASS',
   platforms: [
-    { name: 'ClickBank', status: 'Contract accepted', url: 'https://www.clickbank.com' },
-    { name: 'Deel', status: 'Application submitted ($1,500/customer)', url: 'https://www.deel.com/partners' },
-    { name: 'beehiiv', status: 'Applied', url: 'https://www.beehiiv.com' },
-    { name: 'Kit', status: 'Queued', url: 'https://kit.com' },
-    { name: 'Amazon Associates', status: 'Queued', url: 'https://affiliate-program.amazon.com' },
+    { name: 'ClickBank', status: 'Contract accepted' },
+    { name: 'Deel', status: 'Application submitted ($1,500/customer)' },
+    { name: 'beehiiv', status: 'Applied' },
+    { name: 'Kit', status: 'Queued' },
+    { name: 'Amazon', status: 'Queued' },
   ],
   revenue: 0,
 };
 
 const QUANT = {
   status: 'RESEARCH_HOLD',
-  marketUrl: 'https://www.tradingview.com',
   strategy: 'NO_DEPLOYABLE_STRATEGY — no defensible edge found (honest)',
   infrastructure: 'LIVE_READY',
   wallet: 'READY — $20 hard cap enforced',
