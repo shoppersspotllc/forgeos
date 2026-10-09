@@ -186,13 +186,22 @@ const DEFAULT_OPERATIONS: Record<string, string> = {
   rss: 'fetch-feed',
 };
 
-function parseToolCall(text: string): { capability: string; operation: string; params: any } | null {
+function parseToolCall(text: string, dotName: string): { capability: string; operation: string; params: any } | null {
   const m = TOOLCALL_RE.exec(text);
   if (!m) return null;
   try {
     const o = JSON.parse(m[1]);
-    if (!o || typeof o.capability !== 'string') return null;
-    const capability: string = o.capability;
+    if (!o || typeof o !== 'object') return null;
+    let capability: string | null = typeof o.capability === 'string' ? o.capability : null;
+    // If capability omitted and the Dot has exactly one allowed tool, infer it.
+    if (!capability) {
+      const allowed = getAllowedCapabilities(dotName);
+      if (allowed.length === 1) {
+        capability = allowed[0];
+      } else {
+        return null;
+      }
+    }
     // Liberal parsing: accept full {capability, operation, params} OR simplified
     // {capability, ...paramKeys} with operation inferred from capability default.
     let operation: string | undefined = typeof o.operation === 'string' ? o.operation : DEFAULT_OPERATIONS[capability];
@@ -374,7 +383,7 @@ export async function POST(req: NextRequest) {
     for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
       gatewayData = await callForgeosAi(serviceKey, convo, capability);
       const text = extractAssistantText(gatewayData);
-      const tc = round < MAX_TOOL_ROUNDS ? parseToolCall(text) : null;
+      const tc = round < MAX_TOOL_ROUNDS ? parseToolCall(text, dotName) : null;
       if (!tc) break;
 
       // Server-side permission check (the authority)
