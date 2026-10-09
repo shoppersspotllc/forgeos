@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkRateLimit, getClientIp } from '@/lib/forgeos-ai/rate-limit.mjs';
+import { checkRateLimit, getClientIp } from '@/lib/forgeos-ai/rate-limit';
 
 // Vercel: max 60s execution (Hobby plan limit)
 export const maxDuration = 60;
