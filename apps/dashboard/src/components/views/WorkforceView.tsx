@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import {
-  GlassPanel, SectionHeader, GlowButton, StatusPill, FadeUp,
+  GlassPanel, SectionHeader, GlowButton, FadeUp,
 } from '@/components/design-system';
 import { Play, Loader2, CheckCircle2, XCircle, ChevronDown, ChevronRight, AlertTriangle, Target } from 'lucide-react';
 
@@ -78,9 +78,16 @@ function DotCard({
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-bold text-lg" style={{ color: 'var(--text)' }}>{objective.dotName}</h3>
-            <StatusPill status={objective.priority === 'high' ? 'warning' : 'info'}>
+            <span
+              className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+              style={{
+                background: objective.priority === 'high' ? 'rgba(255,180,0,0.12)' : 'rgba(100,150,255,0.12)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-secondary)',
+              }}
+            >
               {objective.priority === 'high' ? 'High priority' : 'Standard'}
-            </StatusPill>
+            </span>
             <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--surface)', color: 'var(--text-muted)' }}>
               {objective.category}
             </span>
@@ -173,7 +180,7 @@ function DotCard({
         </div>
       )}
 
-      <GlowButton onClick={onRun} disabled={running} className="w-full">
+      <GlowButton onClick={running ? undefined : onRun} className="w-full">
         {running ? (
           <span className="flex items-center justify-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" /> Running...
@@ -262,8 +269,9 @@ export function WorkforceView() {
   return (
     <div className="space-y-6">
       <SectionHeader
+        eyebrow="ForgeOS Workforce"
         title="Workforce Command Center"
-        subtitle="Measurable outcomes per Dot — Young Money revenue first"
+        description="Measurable outcomes per Dot — Young Money revenue first"
       />
 
       {/* Policy banners */}
