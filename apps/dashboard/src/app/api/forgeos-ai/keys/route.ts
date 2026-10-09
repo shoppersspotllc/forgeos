@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import {
   generateServiceKey,
   listServiceKeysMeta,
@@ -26,7 +27,6 @@ import {
 
 // Admin token from env (never in code)
 // Phase 4: Timing-safe comparison prevents timing attacks on admin token
-import { timingSafeEqual } from 'crypto';
 function checkAdmin(req: NextRequest): boolean {
   const adminToken = process.env.FORGEOS_ADMIN_TOKEN;
   if (!adminToken) return false;
