@@ -40,6 +40,15 @@ const BUILT_IN_PROVIDERS = [
     capabilities: [CAPABILITIES.CHAT, CAPABILITIES.CODING, CAPABILITIES.FAST, CAPABILITIES.VISION],
   },
   {
+    id: 'gemini',
+    label: 'Google Gemini',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    requiresKey: true,
+    priority: 15, // Primary cloud backend (free tier)
+    timeout: 120000,
+    capabilities: [CAPABILITIES.CHAT, CAPABILITIES.CODING, CAPABILITIES.FAST, CAPABILITIES.VISION],
+  },
+  {
     id: 'omniroute',
     label: 'OmniRoute',
     baseUrl: process.env.OMNIROUTE_BASE || 'http://127.0.0.1:20128/v1',
