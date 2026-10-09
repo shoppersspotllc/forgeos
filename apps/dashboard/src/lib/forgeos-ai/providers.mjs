@@ -58,6 +58,15 @@ const BUILT_IN_PROVIDERS = [
     timeout: 120000,
     capabilities: [CAPABILITIES.CHAT, CAPABILITIES.CODING, CAPABILITIES.FAST, CAPABILITIES.EMBEDDINGS],
   },
+  {
+    id: 'zurelay',
+    label: 'Zurelay',
+    baseUrl: 'https://api.zurelay.com/v1',
+    requiresKey: true,
+    priority: 25,
+    timeout: 120000,
+    capabilities: [CAPABILITIES.CHAT, CAPABILITIES.CODING, CAPABILITIES.FAST, CAPABILITIES.VISION],
+  },
 ];
 
 export const ProviderState = {
