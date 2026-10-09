@@ -32,6 +32,7 @@ const GODSEYE_API_ROUTES = [
   "weather-effects",
   "weather",
   "wind",
+  "scout",
 ];
 
 const nextConfig: NextConfig = {
