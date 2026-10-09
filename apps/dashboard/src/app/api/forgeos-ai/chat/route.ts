@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, getClientIp } from '@/lib/forgeos-ai/rate-limit.mjs';
 import { gatewayChat } from '@/lib/forgeos-ai/gateway-dual';
 import {
+
+// Vercel: max 60s execution (Hobby plan limit)
+export const maxDuration = 60;
   extractBearerToken,
   validateServiceKey,
 } from '@/lib/forgeos-ai/service-keys.mjs';
@@ -40,5 +44,14 @@ export async function POST(req: NextRequest) {
   if (!body.model) {
     body.model = 'llama3.2:1b';
   }
+  // Rate limiting: 60 requests/minute per authenticated consumer (Phase 1 hardening)
+  const rateLimit = checkRateLimit(`forgeos-ai:${auth.keyId}`, { maxRequests: 60, windowMs: 60000 });
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Please try again later.', retryAfter: rateLimit.retryAfter },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter || 60) } }
+    );
+  }
+
   return gatewayChat(body);
 }
