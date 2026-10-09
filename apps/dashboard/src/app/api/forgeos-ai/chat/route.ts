@@ -3,6 +3,20 @@ import { gatewayChat } from '@/lib/forgeos-ai/gateway-dual';
 import {
 
 export const maxDuration = 60;
+// Phase 2.1: Minimal in-memory rate limiter (per-instance)
+const __rateBuckets = new Map();
+function __checkRate(key, maxReq, windowMs) {
+  const now = Date.now();
+  const b = __rateBuckets.get(key);
+  if (!b || now >= b.resetAt) {
+    __rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  if (b.count >= maxReq) return false;
+  b.count++;
+  return true;
+}
+
   extractBearerToken,
   validateServiceKey,
 } from '@/lib/forgeos-ai/service-keys.mjs';
@@ -42,5 +56,13 @@ export async function POST(req: NextRequest) {
   if (!body.model) {
     body.model = 'llama3.2:1b';
   }
+  // Rate limit: 60 req/min per authenticated key
+  if (!__checkRate('rl:' + auth.keyId, 60, 60000)) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', retryAfter: 60 },
+      { status: 429, headers: { 'Retry-After': '60' } }
+    );
+  }
+
   return gatewayChat(body);
 }
