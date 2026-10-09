@@ -6,6 +6,7 @@ import { ColibriView } from '@/components/views/ColibriView';
 import { CanvaView } from '@/components/views/CanvaView';
 import { CommandView } from '@/components/views/CommandView';
 import { MyDotsView } from '@/components/views/MyDotsView';
+// Workforce Command Center view
 import { WorkforceView } from '@/components/views/WorkforceView';
 import { TasksView } from '@/components/views/TasksView';
 import { ForgeAIView } from '@/components/views/ForgeAIView';
