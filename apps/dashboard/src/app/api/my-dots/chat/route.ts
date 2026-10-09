@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Vercel: max 60s execution (Hobby plan limit)
-export const maxDuration = 60;
-
 /**
  * My Dots — Workforce AI Chat API
  *
@@ -45,7 +42,7 @@ const DOT_PERSONAS: Record<string, { role: string; specialty: string; capability
   Closer: { role: 'Deal Closer', specialty: 'Final conversion & revenue', capability: 'chat' },
 };
 
-export async function POST(req: NextRequest)  {
+export async function POST(req: NextRequest) {
   let body: any = {};
   try {
     body = await req.json();
@@ -114,7 +111,7 @@ export async function POST(req: NextRequest)  {
         Authorization: `Bearer ${serviceKey}`,
       },
       body: JSON.stringify({ messages, capability }),
-      signal: AbortSignal.timeout(50000),
+      signal: AbortSignal.timeout(120000),
     });
 
     const data = await res.json().catch(() => ({}));
