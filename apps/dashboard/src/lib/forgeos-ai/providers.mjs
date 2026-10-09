@@ -42,11 +42,12 @@ const BUILT_IN_PROVIDERS = [
   {
     id: 'gemini',
     label: 'Google Gemini',
-    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     requiresKey: true,
     priority: 15, // Primary cloud backend (free tier)
     timeout: 120000,
     capabilities: [CAPABILITIES.CHAT, CAPABILITIES.CODING, CAPABILITIES.FAST, CAPABILITIES.VISION],
+    nativeGemini: true,
   },
   {
     id: 'omniroute',
