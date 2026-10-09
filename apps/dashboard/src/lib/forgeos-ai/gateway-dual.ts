@@ -82,7 +82,7 @@ async function tryGateway(path: string, init?: RequestInit): Promise<{ ok: boole
     });
     const data = await res.json().catch(() => ({}));
     return { ok: res.ok, data, status: res.status };
-  } catch {
+  } catch (_e) {
     return { ok: false, data: null, status: 0 };
   }
 }
