@@ -115,6 +115,35 @@ class Provider {
   }
 
   /** Circuit breaker: should we attempt this provider? */
+  async geminiChat(messages, options = {}) {
+    const model = options.model || 'gemini-2.5-flash';
+    const key = vault.getInternal(this.id);
+    const contents = messages.filter(m => m.role !== 'system').map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    }));
+    const sys = messages.find(m => m.role === 'system');
+    const body = { contents };
+    if (sys) body.systemInstruction = { parts: [{ text: sys.content }] };
+    const url = `${this.baseUrl}/models/${model}:generateContent?key=${key}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(options.timeout || this.timeout),
+    });
+    if (!res.ok) throw new Error(`${this.label}: HTTP ${res.status}`);
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    this.recordSuccess(0);
+    return {
+      id: `gemini-${Date.now()}`, object: 'chat.completion',
+      created: Math.floor(Date.now()/1000), model,
+      choices: [{ index: 0, message: { role: 'assistant', content: text }, finish_reason: 'stop' }],
+      usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+    };
+  }
+
   circuitAllows() {
     if (this.circuit === 'CLOSED') return true;
     if (this.circuit === 'OPEN') {
@@ -253,6 +282,7 @@ class Provider {
 
   /** Chat with retry and exponential backoff. */
   async chat(messages, options = {}) {
+    if (this.nativeGemini) return this.geminiChat(messages, options);
     if (this.requiresKey && !vault.has(this.id)) {
       throw new Error(`${this.label}: NEEDS_CONFIGURATION — no credential`);
     }
