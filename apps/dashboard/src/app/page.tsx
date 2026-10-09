@@ -56,7 +56,7 @@ export default function Home() {
 
   const renderView = () => {
     switch (view) {
-      case 'command': return <CommandView />;
+      case 'command': return <CommandView onNavigate={(v: string) => setView(v as View)} />;
       case 'mydots': return <MyDotsView />;
       case 'tasks': return <TasksView />;
       case 'colibri': return <ColibriView />;
@@ -71,7 +71,7 @@ export default function Home() {
       case 'claude': return <LocalTerminal worker="claude" sessionId="forgeos-claude" />;
       case 'chrome': return <ChromeView />;
       case 'github': return <GitHubView />;
-      default: return <CommandView />;
+      default: return <CommandView onNavigate={(v: string) => setView(v as View)} />;
     }
   };
 
