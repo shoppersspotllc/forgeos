@@ -64,7 +64,7 @@ export async function routeChat(body: {
   capability?: string;
   temperature?: number;
   max_tokens?: number;
-  provider?: string;
+  // provider selection removed (Phase 2) - ForgeOS AI controls routing
 }): Promise<{ ok: boolean; data: any; status: number }> {
   if (!body.messages || !Array.isArray(body.messages)) {
     return { ok: false, data: { error: 'messages array required' }, status: 400 };
@@ -84,7 +84,7 @@ export async function routeChat(body: {
     const pool = await getPool();
     const routed = await pool.route(body.messages, {
       model: body.model,
-      provider: body.provider,
+      // provider: removed (Phase 2) - ForgeOS AI controls routing
       capability: body.capability,
       temperature: body.temperature,
       maxTokens: body.max_tokens,
@@ -185,7 +185,7 @@ export async function gatewayChat(body: {
   capability?: string;
   temperature?: number;
   max_tokens?: number;
-  provider?: string;
+  // provider selection removed (Phase 2) - ForgeOS AI controls routing
 }) {
   if (!body.messages || !Array.isArray(body.messages)) {
     return NextResponse.json({ error: 'messages array required' }, { status: 400 });
@@ -206,7 +206,7 @@ export async function gatewayChat(body: {
     const pool = await getPool();
     const routed = await pool.route(body.messages, {
       model: body.model,
-      provider: body.provider,
+      // provider: removed (Phase 2) - ForgeOS AI controls routing
       capability: body.capability,
       temperature: body.temperature,
       maxTokens: body.max_tokens,
