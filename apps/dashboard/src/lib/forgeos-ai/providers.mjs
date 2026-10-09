@@ -151,6 +151,33 @@ class Provider {
     };
   }
 
+  /** Phase 3: Gemini with failure accounting (retry + circuit breaker). */
+  async geminiChatWithAccounting(messages, options = {}) {
+    const maxAttempts = 1 + (options.retries ?? CIRCUIT.MAX_RETRIES);
+    let lastError;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      if (attempt > 0) {
+        await new Promise(r => setTimeout(r, CIRCUIT.RETRY_BASE_MS * Math.pow(2, attempt - 1)));
+      }
+      try {
+        const result = await this.geminiChat(messages, options);
+        return { data: result, latencyMs: 0, attempts: attempt + 1 };
+      } catch (e) {
+        lastError = e;
+        // Don't retry client errors (4xx except 408, 429)
+        const statusMatch = e.message.match(/HTTP (\d+)/);
+        if (statusMatch) {
+          const status = parseInt(statusMatch[1]);
+          if (status === 400 || status === 401 || status === 403 || status === 404 || status === 429) {
+            break;
+          }
+        }
+      }
+    }
+    this.recordFailure(lastError.message);
+    throw lastError;
+  }
+
   circuitAllows() {
     if (this.circuit === 'CLOSED') return true;
     if (this.circuit === 'OPEN') {
@@ -226,7 +253,12 @@ class Provider {
     try {
       const headers = {};
       if (this.requiresKey) {
-        headers['Authorization'] = `Bearer ${vault.getInternal(this.id)}`;
+        // Phase 3: Use correct auth per provider
+        if (this.nativeGemini) {
+          headers['x-goog-api-key'] = vault.getInternal(this.id);
+        } else {
+          headers['Authorization'] = `Bearer ${vault.getInternal(this.id)}`;
+        }
       }
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 15000);
@@ -289,13 +321,14 @@ class Provider {
 
   /** Chat with retry and exponential backoff. */
   async chat(messages, options = {}) {
-    if (this.nativeGemini) return this.geminiChat(messages, options);
     if (this.requiresKey && !vault.has(this.id)) {
       throw new Error(`${this.label}: NEEDS_CONFIGURATION — no credential`);
     }
     if (!this.circuitAllows()) {
       throw new Error(`${this.label}: circuit breaker OPEN — skipping`);
     }
+    // Phase 3: Gemini now goes through failure accounting (no bypass)
+    if (this.nativeGemini) return this.geminiChatWithAccounting(messages, options);
 
     const headers = { 'Content-Type': 'application/json' };
     if (this.requiresKey) {
