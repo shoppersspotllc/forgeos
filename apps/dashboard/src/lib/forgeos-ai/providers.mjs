@@ -319,7 +319,14 @@ class Provider {
           headers,
           signal: ctrl.signal,
           body: JSON.stringify({
-            model: options.model || 'default',
+            model: (() => {
+              const m = options.model;
+              // OpenRouter requires valid model IDs; use free tier default for Ollama/generic models
+              if (!m || m === 'default' || m.includes(':1b') || m.startsWith('llama')) {
+                return 'meta-llama/llama-3.2-3b-instruct:free';
+              }
+              return m;
+            })(),
             messages,
             temperature: options.temperature ?? 0.7,
             max_tokens: options.maxTokens,
