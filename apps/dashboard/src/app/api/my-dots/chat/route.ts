@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
   let body: any = {};
   try {
     body = await req.json();
-  } catch {
+  } catch (_e) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
@@ -96,9 +96,9 @@ export async function POST(req: NextRequest) {
   if (body.dot && typeof body.dot.name === 'string') {
     dotName = body.dot.name;
     const known = DOT_PERSONAS[dotName];
-    dotRole = body.dot.role || known?.role || 'AI Specialist';
-    dotSpecialty = body.dot.specialty || known?.specialty || 'General assistance';
-    capability = body.dot.capability || known?.capability || 'chat';
+    dotRole = body.dot.role || (known && known.role) || 'AI Specialist';
+    dotSpecialty = body.dot.specialty || (known && known.specialty) || 'General assistance';
+    capability = body.dot.capability || (known && known.capability) || 'chat';
     userMessages = Array.isArray(body.messages) ? body.messages : [];
   } else if (typeof body.dotName === 'string' && typeof body.message === 'string') {
     dotName = body.dotName;
@@ -169,7 +169,7 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json(data);
   } catch (e: any) {
-    const msg = e?.name === 'AbortError' ? 'request timed out' : e?.message || 'unknown error';
+    const msg = (e && e.name) === 'AbortError' ? 'request timed out' : (e && e.message) || 'unknown error';
     return NextResponse.json(
       { error: `${dotName} could not reach ForgeOS AI: ${msg}` },
       { status: 502 }
