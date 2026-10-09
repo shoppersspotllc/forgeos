@@ -29,7 +29,8 @@ class Vault {
       } catch { /* fall through */ }
     }
     const envKey = `FORGEOS_${providerId.toUpperCase().replace(/-/g, '_')}_KEY`;
-    return process.env[envKey] || null;
+    const envVal = process.env[envKey];
+    return (envVal && envVal.trim()) || null;
   }
 
   /** Returns true if a credential exists. NEVER returns the value. */
