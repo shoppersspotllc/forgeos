@@ -333,7 +333,7 @@ function AffiliateView() {
               <GlassPanel key={h.id} padding="p-3">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-mono" style={{ color: 'var(--text)' }}>{h.id}</p>
-                  <StatusPill status="online">{h.tid}</StatusPill>
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: 'var(--success)', color: '#fff' }}>{h.tid}</span>
                 </div>
               </GlassPanel>
             ))}
@@ -384,7 +384,7 @@ function QuantView() {
       <div className="grid md:grid-cols-3 gap-4 mb-6">
         <GlassPanel glow="#8b5cf6">
           <p className="text-sm font-bold mb-1" style={{ color: 'var(--text)' }}>Status</p>
-          <StatusPill status={QUANT.status === 'RESEARCH_HOLD' ? 'warning' : 'online'}>{QUANT.status}</StatusPill>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: 'var(--warning)', color: '#fff' }}>{QUANT.status}</span>
           <p className="text-xs mt-3" style={{ color: 'var(--text-secondary)' }}>{QUANT.strategy}</p>
         </GlassPanel>
         <GlassPanel>
