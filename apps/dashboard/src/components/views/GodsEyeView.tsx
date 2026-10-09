@@ -6,7 +6,7 @@ import {
 } from '@/components/design-system';
 import { Eye, ExternalLink, Info, MonitorSmartphone, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 
-const GODS_EYE_URL = 'http://100.87.82.46:4173';
+const GODS_EYE_URL = '/gods-eye';
 
 export function GodsEyeView() {
   const [checking, setChecking] = useState(false);
@@ -91,8 +91,7 @@ export function GodsEyeView() {
                   God's Eye isn't reachable from this device.
                 </p>
                 <p className="text-xs mt-2 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                  Check: (1) the Windows PC is powered on, (2) the God's Eye app is running on it
-                  (port 4173), (3) this device has Tailscale connected.
+                  God's Eye is cloud-hosted. If unreachable, check your internet connection.
                 </p>
               </div>
             )}
@@ -109,7 +108,7 @@ export function GodsEyeView() {
             </p>
             <p className="text-xs mt-2 flex items-center justify-center gap-2 px-2" style={{ color: 'var(--text-muted)' }}>
               <Info className="h-3.5 w-3.5 shrink-0" />
-              <span>Requires the God's Eye app running on your local network (Tailscale).</span>
+              <span>Hosted in the cloud — no PC, no Tailscale, works from any device.</span>
             </p>
           </GlassPanel>
         </FadeUp>

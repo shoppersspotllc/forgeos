@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server';
 
-const GODS_EYE_URL = process.env.GODS_EYE_URL || 'http://100.87.82.46:4173';
+// God's Eye is hosted on Vercel (cloud). Probe the upstream deployment directly.
+// No Tailscale, no PC, no local network required.
+const GODS_EYE_URL =
+  process.env.GODS_EYE_URL || 'https://forgeos-godseye-7otrjiihs-destiny-usa.vercel.app/gods-eye-view/';
 
 export async function GET() {
   try {
     const res = await fetch(GODS_EYE_URL, {
       method: 'HEAD',
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(8000),
     });
-    return NextResponse.json({ reachable: res.ok, url: GODS_EYE_URL });
+    return NextResponse.json({ reachable: res.ok, url: '/gods-eye' });
   } catch {
-    return NextResponse.json({ reachable: false, url: GODS_EYE_URL });
+    return NextResponse.json({ reachable: false, url: '/gods-eye' });
   }
 }
