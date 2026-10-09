@@ -10,6 +10,59 @@ import { NextResponse } from 'next/server';
 
 const GATEWAY_URL = process.env.FORGEOS_AI_ENDPOINT || 'http://127.0.0.1:8788';
 
+/**
+ * Phase 4: Observability — sanitized structured logging.
+ *
+ * NEVER log: credentials (fk_...), Authorization headers, provider API keys,
+ * full prompt content, internal URLs, or stack traces.
+ *
+ * Logged: timestamp, event type, keyId, consumer name, model, provider,
+ * success/failure, latency, status code, message counts (not content).
+ */
+interface AuthContext {
+  keyId?: string;
+  consumerName?: string;
+}
+
+function sanitizeForLog(value: any): any {
+  if (typeof value === 'string') {
+    // Redact anything that looks like a credential
+    if (/^(fk_|sk-|Bearer\s+)/i.test(value)) return '[REDACTED]';
+    if (value.length > 200) return value.slice(0, 200) + '...[truncated]';
+    return value;
+  }
+  if (Array.isArray(value)) return value.map(sanitizeForLog);
+  if (value && typeof value === 'object') {
+    const out: any = {};
+    for (const [k, v] of Object.entries(value)) {
+      const kl = k.toLowerCase();
+      // Never log sensitive keys
+      if (kl.includes('key') || kl.includes('token') || kl.includes('secret') ||
+          kl.includes('auth') || kl.includes('credential') || kl.includes('password')) {
+        out[k] = '[REDACTED]';
+      } else if (kl === 'messages' || kl === 'prompt' || kl === 'content') {
+        // Log counts, not content
+        out[k] = Array.isArray(v) ? `[${v.length} messages]` : '[content redacted]';
+      } else {
+        out[k] = sanitizeForLog(v);
+      }
+    }
+    return out;
+  }
+  return value;
+}
+
+function logAIEvent(event: string, data: Record<string, any>) {
+  const sanitized = sanitizeForLog(data);
+  // Structured JSON log for serverless log aggregation
+  console.log(JSON.stringify({
+    ts: new Date().toISOString(),
+    service: 'forgeos-ai',
+    event,
+    ...sanitized,
+  }));
+}
+
 // Lazy-load the in-process pool to avoid importing Node.js 'fs' at module level
 // in environments where it might not be available during build.
 let poolInstance: any = null;
@@ -65,10 +118,24 @@ export async function routeChat(body: {
   temperature?: number;
   max_tokens?: number;
   // provider selection removed (Phase 2) - ForgeOS AI controls routing
-}): Promise<{ ok: boolean; data: any; status: number }> {
+}, authContext?: AuthContext): Promise<{ ok: boolean; data: any; status: number }> {
+  const startTime = Date.now();
+  const keyId = authContext?.keyId || 'unknown';
+  const consumerName = authContext?.consumerName || 'unknown';
+
   if (!body.messages || !Array.isArray(body.messages)) {
+    logAIEvent('ai_request_rejected', {
+      keyId, consumer: consumerName,
+      reason: 'messages_array_required',
+      latencyMs: Date.now() - startTime,
+    });
     return { ok: false, data: { error: 'messages array required' }, status: 400 };
   }
+
+  // Phase 4: Log request start (sanitized - no prompt content)
+  const messageCount = body.messages.length;
+  const totalChars = body.messages.reduce((sum, m) =>
+    sum + (typeof m.content === 'string' ? m.content.length : 0), 0);
 
   const gw = await tryGateway('/v1/chat/completions', {
     method: 'POST',
@@ -76,6 +143,12 @@ export async function routeChat(body: {
     body: JSON.stringify(body),
   });
   if (gw.ok || gw.status !== 0) {
+    logAIEvent('ai_request_complete', {
+      keyId, consumer: consumerName,
+      mode: 'gateway', success: gw.ok, statusCode: gw.status,
+      messageCount, totalChars,
+      latencyMs: Date.now() - startTime,
+    });
     return gw;
   }
 
@@ -89,6 +162,15 @@ export async function routeChat(body: {
       temperature: body.temperature,
       maxTokens: body.max_tokens,
     });
+    const latencyMs = Date.now() - startTime;
+    // Phase 4: Log success with consumer identity (sanitized)
+    logAIEvent('ai_request_complete', {
+      keyId, consumer: consumerName,
+      mode: 'in-process', success: true, statusCode: 200,
+      provider: routed.provider, model: body.model || routed.evidence?.model,
+      fallback: routed.fallback, messageCount, totalChars,
+      latencyMs,
+    });
     return {
       ok: true,
       status: 200,
@@ -101,11 +183,23 @@ export async function routeChat(body: {
           capability: body.capability || 'chat',
           routedAt: new Date().toISOString(),
           _mode: 'in-process',
+          // Phase 4: Consumer identity in evidence (name only, not key)
+          consumer: consumerName,
           ...routed.evidence,
         },
       },
     };
   } catch (err: any) {
+    const latencyMs = Date.now() - startTime;
+    // Phase 4: Log failure (sanitized - no stack trace, no internal URLs)
+    logAIEvent('ai_request_failed', {
+      keyId, consumer: consumerName,
+      mode: 'in-process', success: false,
+      statusCode: err.statusCode || 503,
+      errorCode: err.code || 'unknown',
+      messageCount, totalChars,
+      latencyMs,
+    });
     return {
       ok: false,
       status: err.statusCode || 503,
@@ -185,10 +279,24 @@ export async function gatewayChat(body: {
   temperature?: number;
   max_tokens?: number;
   // provider selection removed (Phase 2) - ForgeOS AI controls routing
-}) {
+}, authContext?: AuthContext) {
+  const startTime = Date.now();
+  const keyId = authContext?.keyId || 'unknown';
+  const consumerName = authContext?.consumerName || 'unknown';
+
   if (!body.messages || !Array.isArray(body.messages)) {
+    logAIEvent('ai_request_rejected', {
+      keyId, consumer: consumerName,
+      reason: 'messages_array_required',
+      latencyMs: Date.now() - startTime,
+    });
     return NextResponse.json({ error: 'messages array required' }, { status: 400 });
   }
+
+  // Phase 4: Log request start (sanitized - no prompt content)
+  const messageCount = body.messages.length;
+  const totalChars = body.messages.reduce((sum, m) =>
+    sum + (typeof m.content === 'string' ? m.content.length : 0), 0);
 
   const gw = await tryGateway('/v1/chat/completions', {
     method: 'POST',
@@ -197,6 +305,12 @@ export async function gatewayChat(body: {
   });
   if (gw.ok || gw.status !== 0) {
     // Gateway responded (success or error) — use its response
+    logAIEvent('ai_request_complete', {
+      keyId, consumer: consumerName,
+      mode: 'gateway', success: gw.ok, statusCode: gw.status,
+      messageCount, totalChars,
+      latencyMs: Date.now() - startTime,
+    });
     return NextResponse.json(gw.data, { status: gw.status });
   }
 
@@ -210,6 +324,15 @@ export async function gatewayChat(body: {
       temperature: body.temperature,
       maxTokens: body.max_tokens,
     });
+    const latencyMs = Date.now() - startTime;
+    // Phase 4: Log success with consumer identity (sanitized)
+    logAIEvent('ai_request_complete', {
+      keyId, consumer: consumerName,
+      mode: 'in-process', success: true, statusCode: 200,
+      provider: routed.provider, model: body.model || routed.evidence?.model,
+      fallback: routed.fallback, messageCount, totalChars,
+      latencyMs,
+    });
     return NextResponse.json({
       ...routed.result,
       forgeos: {
@@ -219,17 +342,27 @@ export async function gatewayChat(body: {
         capability: body.capability || 'chat',
         routedAt: new Date().toISOString(),
         _mode: 'in-process',
+        // Phase 4: Consumer identity in evidence (name only, not key)
+        consumer: consumerName,
         ...routed.evidence,
       },
     });
   } catch (err: any) {
     const status = err.statusCode || 503;
+    const latencyMs = Date.now() - startTime;
+    // Phase 4: Log failure (sanitized - no stack trace, no internal URLs)
+    logAIEvent('ai_request_failed', {
+      keyId, consumer: consumerName,
+      mode: 'in-process', success: false, statusCode: status,
+      errorCode: err.code || 'unknown',
+      messageCount, totalChars,
+      latencyMs,
+    });
     return NextResponse.json(
       {
-        error: err.message || 'ForgeOS AI gateway unreachable',
-        gateway: GATEWAY_URL,
+        // Phase 4: No internal URLs, no raw error messages in client errors
+        error: 'ForgeOS AI temporarily unavailable',
         _mode: 'in-process',
-        details: err.details,
       },
       { status }
     );
