@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
+import { Buffer } from 'buffer';
 import {
   generateServiceKey,
   listServiceKeysMeta,
