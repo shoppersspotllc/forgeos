@@ -360,13 +360,17 @@ class ProviderPool {
     return [...this.providers.values()].sort((a, b) => a.priority - b.priority);
   }
 
-  /** Routing-eligible: configured, supports capability, circuit allows. */
+  /** Routing-eligible: configured, supports capability, circuit allows.
+   * Cold-start fix: a provider that isConfigured() is eligible on first use
+   * even while its runtime state is still NEEDS_CONFIGURATION (lastCheck === null).
+   * The state check only excludes providers that were actually checked and found
+   * to need configuration. This makes serverless cold starts work correctly. */
   eligible(capability = CAPABILITIES.CHAT) {
     return this.sorted().filter(p =>
       p.isConfigured() &&
       p.supports(capability) &&
       p.circuitAllows() &&
-      p.state !== ProviderState.NEEDS_CONFIGURATION
+      (p.state !== ProviderState.NEEDS_CONFIGURATION || p.lastCheck === null)
     );
   }
 
