@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkRateLimit, getClientIp } from '@/lib/forgeos-ai/rate-limit.mjs';
+import { checkRateLimit, getClientIp } from '@/lib/forgeos-ai/rate-limit';
 import { gatewayChat } from '@/lib/forgeos-ai/gateway-dual';
 import {
 
