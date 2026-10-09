@@ -120,8 +120,8 @@ export async function routeChat(body: {
   // provider selection removed (Phase 2) - ForgeOS AI controls routing
 }, authContext?: AuthContext): Promise<{ ok: boolean; data: any; status: number }> {
   const startTime = Date.now();
-  const keyId = authContext?.keyId || 'unknown';
-  const consumerName = authContext?.consumerName || 'unknown';
+  const keyId = (authContext && authContext.keyId) || 'unknown';
+  const consumerName = (authContext && authContext.consumerName) || 'unknown';
 
   if (!body.messages || !Array.isArray(body.messages)) {
     logAIEvent('ai_request_rejected', {
@@ -167,7 +167,7 @@ export async function routeChat(body: {
     logAIEvent('ai_request_complete', {
       keyId, consumer: consumerName,
       mode: 'in-process', success: true, statusCode: 200,
-      provider: routed.provider, model: body.model || routed.evidence?.model,
+      provider: routed.provider, model: body.model || (routed.evidence && routed.evidence.model),
       fallback: routed.fallback, messageCount, totalChars,
       latencyMs,
     });
@@ -281,8 +281,8 @@ export async function gatewayChat(body: {
   // provider selection removed (Phase 2) - ForgeOS AI controls routing
 }, authContext?: AuthContext) {
   const startTime = Date.now();
-  const keyId = authContext?.keyId || 'unknown';
-  const consumerName = authContext?.consumerName || 'unknown';
+  const keyId = (authContext && authContext.keyId) || 'unknown';
+  const consumerName = (authContext && authContext.consumerName) || 'unknown';
 
   if (!body.messages || !Array.isArray(body.messages)) {
     logAIEvent('ai_request_rejected', {
@@ -329,7 +329,7 @@ export async function gatewayChat(body: {
     logAIEvent('ai_request_complete', {
       keyId, consumer: consumerName,
       mode: 'in-process', success: true, statusCode: 200,
-      provider: routed.provider, model: body.model || routed.evidence?.model,
+      provider: routed.provider, model: body.model || (routed.evidence && routed.evidence.model),
       fallback: routed.fallback, messageCount, totalChars,
       latencyMs,
     });
