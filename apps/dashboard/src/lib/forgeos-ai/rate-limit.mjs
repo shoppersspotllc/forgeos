@@ -1,5 +1,5 @@
 /**
- * ForgeOS AI — Rate Limiter
+ * ForgeOS AI - Rate Limiter
  *
  * Token-bucket rate limiter for Vercel/serverless.
  *
