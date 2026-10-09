@@ -10,7 +10,7 @@ import {
   Cpu, Layers, Zap, Palette, ArrowRight, Activity, Sparkles, ShieldCheck, Bot,
 } from 'lucide-react';
 
-export function CommandView() {
+export function CommandView({ onNavigate }: { onNavigate?: (view: string) => void } = {}) {
   const [caps, setCaps] = useState<any>(null);
 
   useEffect(() => {
@@ -119,8 +119,8 @@ export function CommandView() {
                 : 'All capabilities are online. Deploy Dots and start building.'}
             </p>
             <div className="flex gap-3 justify-center">
-              <GlowButton>Deploy a Dot <ArrowRight className="inline h-4 w-4 ml-1" /></GlowButton>
-              <GlowButton variant="ghost">View Architecture</GlowButton>
+              <GlowButton onClick={() => onNavigate?.('mydots')}>Deploy a Dot <ArrowRight className="inline h-4 w-4 ml-1" /></GlowButton>
+              <GlowButton variant="ghost" onClick={() => onNavigate?.('tasks')}>View Architecture</GlowButton>
             </div>
           </GlassPanel>
         </FadeUp>
