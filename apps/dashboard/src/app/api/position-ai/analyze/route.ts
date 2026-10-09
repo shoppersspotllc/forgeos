@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   // Build messages from query or use provided messages
   let messages: { role: string; content: string }[];
   if (body.messages && Array.isArray(body.messages)) {
-    messages = body.messages;
+    messages = body.messages.filter((m: any) => m.role !== 'system');
   } else if (body.query && typeof body.query === 'string' && body.query.trim()) {
     messages = [
       { role: 'system', content: POSITION_SYSTEM_PROMPT },
