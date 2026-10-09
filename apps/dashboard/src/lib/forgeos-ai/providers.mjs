@@ -562,7 +562,9 @@ class ProviderPool {
           },
         };
       } catch (e) {
-        errors.push({ provider: provider.id, error: e.message?.slice(0, 200) });
+        // Phase 3: Keep provider ID for internal evidence, sanitize message
+        const safeMsg = e.message ? e.message.replace(/^[A-Za-z ]+: /, '') : 'Unknown error';
+        errors.push({ provider: provider.id, error: safeMsg.slice(0, 200) });
         // Continue to next provider — one failure never brings down ForgeOS
       }
     }
@@ -581,7 +583,9 @@ class ProviderPool {
     });
     const err = new Error('All providers unavailable');
     err.statusCode = 503;
-    err.details = { errors, capability, triedProviders: candidates.map(p => p.id) };
+    // Phase 3: Consumer-safe error (no provider names/URLs in client response)
+    // Full details are in server-side recordEvidence for diagnostics
+    err.details = { capability, providerCount: candidates.length };
     throw err;
   }
 
