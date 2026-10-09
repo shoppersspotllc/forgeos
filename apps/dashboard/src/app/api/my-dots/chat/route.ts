@@ -177,14 +177,35 @@ function withAssistantText(data: any, newText: string): any {
   return out;
 }
 
+const DEFAULT_OPERATIONS: Record<string, string> = {
+  'web-search': 'search',
+  'web-read': 'read',
+  'github-research': 'repo-info',
+  'youtube-transcript': 'get-transcript',
+  reddit: 'search',
+  rss: 'fetch-feed',
+};
+
 function parseToolCall(text: string): { capability: string; operation: string; params: any } | null {
   const m = TOOLCALL_RE.exec(text);
   if (!m) return null;
   try {
     const o = JSON.parse(m[1]);
-    if (o && typeof o.capability === 'string' && typeof o.operation === 'string' && o.params && typeof o.params === 'object') {
-      return { capability: o.capability, operation: o.operation, params: o.params };
+    if (!o || typeof o.capability !== 'string') return null;
+    const capability: string = o.capability;
+    // Liberal parsing: accept full {capability, operation, params} OR simplified
+    // {capability, ...paramKeys} with operation inferred from capability default.
+    let operation: string | undefined = typeof o.operation === 'string' ? o.operation : DEFAULT_OPERATIONS[capability];
+    if (!operation) return null;
+    let params: any;
+    if (o.params && typeof o.params === 'object') {
+      params = o.params;
+    } else {
+      params = { ...(o as object) };
+      delete params.capability;
+      delete params.operation;
     }
+    return { capability, operation, params };
   } catch {
     /* malformed toolcall JSON — treated as no tool call */
   }
