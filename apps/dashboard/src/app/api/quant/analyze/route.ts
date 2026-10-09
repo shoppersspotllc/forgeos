@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, getClientIp } from '@/lib/forgeos-ai/rate-limit.mjs';
+
+// Vercel: max 60s execution (Hobby plan limit)
+export const maxDuration = 60;
 
 /**
  * Quant — Trading Research AI API
@@ -47,7 +51,16 @@ YOUR ROLE:
 - If asked to execute trades or move funds, decline — you are a research analyst, not an execution system.
 - Keep analysis concise but complete. Cite assumptions explicitly.`;
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest)  {
+  // Rate limiting: 30 requests/minute per IP (Phase 1 hardening)
+  const clientIp = getClientIp(req);
+  const rateLimit = checkRateLimit(`consumer:${clientIp}`, { maxRequests: 30, windowMs: 60000 });
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Please try again later.', retryAfter: rateLimit.retryAfter },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter || 60) } }
+    );
+  }
   let body: any = {};
   try {
     body = await req.json();
@@ -87,7 +100,7 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${serviceKey}`,
       },
       body: JSON.stringify({ messages, capability: 'chat' }),
-      signal: AbortSignal.timeout(120000),
+      signal: AbortSignal.timeout(50000),
     });
 
     const data = await res.json().catch(() => ({}));
