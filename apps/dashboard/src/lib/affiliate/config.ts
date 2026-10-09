@@ -19,6 +19,7 @@ export const AFFILIATE_CONFIG = {
     soulmate_youtube: 'soulmate_youtube',
     soulmate_pinterest: 'soulmate_pinterest',
     soulmate_medium: 'soulmate_medium',
+    soulmate_devto: 'soulmate_devto',
   } as Record<string, string>,
 
   // Fallback when not configured — honest test destination

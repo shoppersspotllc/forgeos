@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 const TID_MAP: Record<string, string> = {
   pinterest: 'soulmate_pinterest',
   medium: 'soulmate_medium',
+  devto: 'soulmate_devto',
 };
 
 export default function CtaButton({
