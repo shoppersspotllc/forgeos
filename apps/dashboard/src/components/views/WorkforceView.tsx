@@ -1,4 +1,5 @@
 'use client';
+// Workforce Command Center v1.0
 
 import { useState, useEffect } from 'react';
 import {
