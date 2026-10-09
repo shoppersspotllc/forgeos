@@ -113,6 +113,7 @@ const DOT_CAPABILITIES: Record<string, string> = {
 // Agentic tool loop
 // ---------------------------------------------------------------------------
 
+// Single-tool Dots: capability inferred when omitted from toolcall
 const MAX_TOOL_ROUNDS = 2;
 const GATEWAY_TIMEOUT_MS = 45000;
 const TOOLCALL_RE = /```toolcall\s*\n([\s\S]*?)\n```/;
