@@ -90,7 +90,7 @@ export default function SoulmateSketchReview() {
       <h2 style={h2Style}>How Does It Work?</h2>
       <ol style={pStyle}>
         <li><strong>You answer a few questions</strong> — name, date of birth, and what you&apos;re looking for in a partner.</li>
-        <li><strong>The artist creates your sketch</strong> — typically delivered digitally within 24–48 hours.</li>
+        <li><strong>The artist creates your sketch</strong> — delivered digitally; check the official site for current delivery times.</li>
         <li><strong>You receive the drawing + description</strong> — a portrait and a write-up of your soulmate&apos;s traits.</li>
       </ol>
 
@@ -124,12 +124,13 @@ export default function SoulmateSketchReview() {
       </ul>
 
       <h2 style={h2Style}>Quick Pros &amp; Cons</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 8 }}>
+      <div className="pros-cons-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 8 }}>
+        <style>{`@media (max-width: 600px) { .pros-cons-grid { grid-template-columns: 1fr !important; } }`}</style>
         <div style={{ background: '#f0fdf4', border: '1px solid #10b981', borderRadius: 8, padding: 16 }}>
           <p style={{ fontWeight: 700, color: '#10b981', margin: '0 0 8px' }}>✓ Pros</p>
           <ul style={{ ...pStyle, margin: 0, paddingLeft: 20 }}>
             <li>Affordable one-time price (under $50)</li>
-            <li>Fast digital delivery (24–48 hours)</li>
+            <li>Fast digital delivery (times vary — check official site)</li>
             <li>Unique, personalized artwork</li>
             <li>Fun gift idea for singles</li>
             <li>No subscription or hidden fees</li>
@@ -174,8 +175,9 @@ export default function SoulmateSketchReview() {
       <div style={{ marginBottom: 16 }}>
         <p style={{ fontWeight: 700, margin: '16px 0 4px' }}>How long does delivery take?</p>
         <p style={pStyle}>
-          Typically 24–48 hours via email as a digital download. Delivery times can vary —
-          check the official site for current estimates.
+          Delivery is digital (via email/download). The vendor advertises quick turnaround,
+          but exact timing can vary — check the official site for current delivery estimates
+          before ordering.
         </p>
       </div>
 
