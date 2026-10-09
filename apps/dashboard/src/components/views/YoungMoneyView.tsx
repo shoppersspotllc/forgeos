@@ -3,11 +3,11 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   GlassPanel, SectionHeader, FadeUp, StatusPill, GlowButton, CinematicBackground,
-  BotAvatar, AnimatedNumber,
+  AnimatedNumber,
 } from '@/components/design-system';
 import {
   DollarSign, Target, Link2, TrendingUp, Wallet, ShieldCheck,
-  ChevronRight, AlertTriangle, CheckCircle2, Clock, Pause,
+  ChevronRight, CheckCircle2, Clock, Pause,
   ExternalLink, Send, Bot, Globe, MessageSquare, Activity,
 } from 'lucide-react';
 
