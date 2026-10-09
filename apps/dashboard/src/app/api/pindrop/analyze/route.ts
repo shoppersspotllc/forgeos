@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkRateLimit, getClientIp } from '@/lib/forgeos-ai/rate-limit';
 
 // Vercel: max 60s execution (Hobby plan limit)
 export const maxDuration = 60;
@@ -85,15 +84,6 @@ ADDITIONAL RULES:
 - Keep responses concise but complete.`;
 
 export async function POST(req: NextRequest)  {
-  // Rate limiting: 30 requests/minute per IP (Phase 1 hardening)
-  const clientIp = getClientIp(req);
-  const rateLimit = checkRateLimit(`consumer:${clientIp}`, { maxRequests: 30, windowMs: 60000 });
-  if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { error: 'Rate limit exceeded. Please try again later.', retryAfter: rateLimit.retryAfter },
-      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter || 60) } }
-    );
-  }
   let body: any = {};
   try {
     body = await req.json();
