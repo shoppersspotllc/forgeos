@@ -168,7 +168,7 @@ function SupervisedDotChat({
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && send()}
+          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && send()}
           placeholder={placeholder}
           className="flex-1 px-4 py-2.5 rounded-xl text-sm outline-none"
           style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
