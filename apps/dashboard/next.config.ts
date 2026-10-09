@@ -3,7 +3,9 @@ import type { NextConfig } from "next";
 // God's Eye cloud deployment (Vercel). All /gods-eye/* and God's Eye /api/*
 // requests are proxied here so the app lives at forgeos.shoppersspotllc.com/gods-eye
 // with no Tailscale, no PC, and no separate domain required.
-const GODSEYE_UPSTREAM = "https://forgeos-godseye-7otrjiihs-destiny-usa.vercel.app";
+// Uses the production alias (not a deployment-specific URL) so rewrites
+// always hit the latest production deployment.
+const GODSEYE_UPSTREAM = "https://forgeos-godseye.vercel.app";
 
 // God's Eye API routes (must not overlap dashboard /api/* routes)
 const GODSEYE_API_ROUTES = [

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 // God's Eye is hosted on Vercel (cloud). Probe the upstream deployment directly.
 // No Tailscale, no PC, no local network required.
 const GODS_EYE_URL =
-  process.env.GODS_EYE_URL || 'https://forgeos-godseye-7otrjiihs-destiny-usa.vercel.app/gods-eye-view/';
+  process.env.GODS_EYE_URL || 'https://forgeos-godseye.vercel.app/gods-eye-view/';
 
 export async function GET() {
   try {
