@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export const maxDuration = 60;
+// Phase 2.1: Request caps
+const __MAX_MESSAGES = 100;
+const __MAX_CHARS = 100000;
+
 // Phase 2.1: Minimal in-memory rate limiter (per-instance, not distributed)
 // For distributed protection, use Vercel KV/Upstash in future.
 const __rateBuckets = new Map();
@@ -103,6 +107,16 @@ export async function POST(req: NextRequest) {
   }
 
   // Quant's ForgeOS service credential — server-side only
+  // Enforce request caps
+  if (messages.length > __MAX_MESSAGES) {
+    return NextResponse.json({ error: 'Too many messages' }, { status: 413 });
+  }
+  let __totalChars = 0;
+  for (const m of messages) { __totalChars += String(m.content || '').length; }
+  if (__totalChars > __MAX_CHARS) {
+    return NextResponse.json({ error: 'Request too large' }, { status: 413 });
+  }
+
   const serviceKey = process.env.FORGEOS_QUANT_KEY;
   if (!serviceKey) {
     return NextResponse.json(
