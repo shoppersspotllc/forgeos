@@ -110,10 +110,9 @@ export async function routeChat(body: {
       ok: false,
       status: err.statusCode || 503,
       data: {
-        error: err.message || 'ForgeOS AI gateway unreachable',
-        gateway: GATEWAY_URL,
+        // Phase 3: No internal URLs in client errors
+        error: 'ForgeOS AI temporarily unavailable',
         _mode: 'in-process',
-        details: err.details,
       },
     };
   }
