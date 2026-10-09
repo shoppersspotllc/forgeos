@@ -35,7 +35,7 @@ function checkAdmin(req: NextRequest): boolean {
   if (header.length !== expected.length) return false;
   try {
     return timingSafeEqual(Buffer.from(header, 'utf8'), Buffer.from(expected, 'utf8'));
-  } catch {
+  } catch (_e) {
     return false;
   }
 }
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
   let body: any = {};
   try {
     body = await req.json();
-  } catch {
+  } catch (_e) {
     // No body is fine, name is optional
   }
 
