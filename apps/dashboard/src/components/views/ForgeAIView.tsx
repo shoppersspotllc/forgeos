@@ -50,8 +50,17 @@ export function ForgeAIView() {
   const runChecks = async () => {
     setChecking(true);
     try {
-      await fetch('/api/forgeos-ai/providers/check', { method: 'POST' });
-      await load();
+      // Use the /check response directly — it contains fresh health states.
+      // Do NOT re-fetch from /providers: serverless function isolation means
+      // the /providers route has a separate pool instance with stale state.
+      const res = await fetch('/api/forgeos-ai/providers/check', { method: 'POST' });
+      const data = await res.json();
+      if (data.providers && Array.isArray(data.providers)) {
+        setProviders(data.providers);
+        setGatewayOnline(true);
+      } else {
+        await load(); // fallback to full reload if check response is unexpected
+      }
     } catch { /* keep old state */ }
     setChecking(false);
   };
