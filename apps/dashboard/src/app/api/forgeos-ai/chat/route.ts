@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { gatewayChat } from '@/lib/forgeos-ai/gateway-dual';
 import {
+  extractBearerToken,
+  validateServiceKey,
+} from '@/lib/forgeos-ai/service-keys.mjs';
 
 export const maxDuration = 60;
 // Phase 2.1: Minimal in-memory rate limiter (per-instance)
@@ -16,11 +19,6 @@ function __checkRate(key, maxReq, windowMs) {
   b.count++;
   return true;
 }
-
-  extractBearerToken,
-  validateServiceKey,
-} from '@/lib/forgeos-ai/service-keys.mjs';
-
 /**
  * Dashboard → ForgeOS AI /v1/chat/completions (dual-mode)
  * Tries the external gateway first, falls back to in-process ProviderPool.
