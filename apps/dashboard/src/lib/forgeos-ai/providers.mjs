@@ -323,7 +323,7 @@ class Provider {
               const m = options.model;
               // OpenRouter requires valid model IDs; use free tier default for Ollama/generic models
               if (!m || m === 'default' || m.includes(':1b') || m.startsWith('llama')) {
-                return 'meta-llama/llama-3.2-3b-instruct:free';
+                return 'meta-llama/llama-3.1-8b-instruct:free';
               }
               return m;
             })(),
