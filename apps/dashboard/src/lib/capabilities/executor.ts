@@ -233,33 +233,35 @@ function numParam(params: any, name: string, def: number, min: number, max: numb
 // ---------------------------------------------------------------------------
 
 async function webSearch(query: string, limit: number = 10): Promise<Array<{ title: string; url: string; snippet: string }>> {
-  // Bing HTML (no API key, free, datacenter-friendly)
-  const url = `https://www.bing.com/search?q=${encodeURIComponent(query)}&count=20`;
+  // Bing RSS (no API key, free, direct URLs, datacenter-friendly)
+  const url = `https://www.bing.com/search?q=${encodeURIComponent(query)}&format=rss&count=20`;
   const res = await fetch(url, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      Accept: 'text/html',
-      'Accept-Language': 'en-US,en;q=0.9',
+      Accept: 'application/rss+xml, text/xml',
     },
     signal: AbortSignal.timeout(12000),
   });
   if (!res.ok) throw new Error(`Search failed: ${res.status}`);
-  const html = await res.text();
+  const xml = await res.text();
 
   const results: Array<{ title: string; url: string; snippet: string }> = [];
-  const algoRe = /<li class="b_algo"[^>]*>[\s\S]*?<h2><a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a><\/h2>([\s\S]*?)<\/li>/g;
+  const itemRe = /<item>([\s\S]*?)<\/item>/g;
 
   let m: RegExpExecArray | null;
   let count = 0;
-  while ((m = algoRe.exec(html)) !== null && count < limit) {
-    const rawUrl = m[1];
-    const title = m[2].replace(/<[^>]+>/g, '').trim();
-    const snippetHtml = m[3];
-    const pMatch = snippetHtml.match(/<p>([\s\S]*?)<\/p>/);
-    const snippet = pMatch ? pMatch[1].replace(/<[^>]+>/g, '').trim().substring(0, 300) : '';
+  while ((m = itemRe.exec(xml)) !== null && count < limit) {
+    const item = m[1];
+    const get = (tag: string): string => {
+      const mm = item.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, 'i'));
+      return mm ? mm[1].trim() : '';
+    };
+    const title = get('title').substring(0, 200);
+    const link = get('link').substring(0, 500);
+    const snippet = get('description').replace(/<[^>]+>/g, '').trim().substring(0, 300);
 
-    if (title && rawUrl.startsWith('http') && rawUrl.indexOf('bing.com') === -1) {
-      results.push({ title: title.substring(0, 200), url: rawUrl.substring(0, 500), snippet });
+    if (title && link.startsWith('http')) {
+      results.push({ title, url: link, snippet });
       count++;
     }
   }
