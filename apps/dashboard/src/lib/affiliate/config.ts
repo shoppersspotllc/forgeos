@@ -31,8 +31,10 @@ export function getHopLink(tid: string): { url: string; live: boolean } {
     return { url: testDestination, live: false };
   }
   if (clickbankNickname && soulmateVendor) {
+    // Official ClickBank query-param format — uses hop.clickbank.net directly,
+    // avoiding per-affiliate subdomain certificate issues.
     return {
-      url: `https://${clickbankNickname}.${soulmateVendor}.hop.clickbank.net/?tid=${trackingId}`,
+      url: `https://hop.clickbank.net/?affiliate=${encodeURIComponent(clickbankNickname)}&vendor=${encodeURIComponent(soulmateVendor)}&tid=${encodeURIComponent(trackingId)}`,
       live: true,
     };
   }
