@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { gatewayChat } from '@/lib/forgeos-ai/gateway-dual';
 import {
-
-// Vercel: max 60s execution (Hobby plan limit)
-export const maxDuration = 60;
   extractBearerToken,
   validateServiceKey,
 } from '@/lib/forgeos-ai/service-keys.mjs';
