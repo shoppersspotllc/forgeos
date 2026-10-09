@@ -12,6 +12,20 @@ export const metadata = {
   title: 'Soulmate Sketch Review: What It Is & Is It Worth It? (2026)',
   description:
     'An honest review of the Soulmate Sketch psychic drawing service — what you get, what it costs, and who it is really for.',
+  openGraph: {
+    title: 'Soulmate Sketch Review: What It Is & Is It Worth It? (2026)',
+    description:
+      'An honest review of the Soulmate Sketch psychic drawing service — what you get, what it costs, and who it is really for.',
+    url: 'https://guides.shoppersspotllc.com/guides/soulmate-sketch',
+    siteName: 'Young Money Guides',
+    type: 'article',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Soulmate Sketch Review: What It Is & Is It Worth It? (2026)',
+    description:
+      'An honest review of the Soulmate Sketch psychic drawing service — what you get, what it costs, and who it is really for.',
+  },
 };
 
 const ctaStyle: React.CSSProperties = {

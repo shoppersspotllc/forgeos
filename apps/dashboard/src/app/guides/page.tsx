@@ -8,6 +8,18 @@ import Link from 'next/link';
 export const metadata = {
   title: 'Young Money Guides — Honest Reviews & Research',
   description: 'Value-first guides and honest product research from Young Money.',
+  openGraph: {
+    title: 'Young Money Guides — Honest Reviews & Research',
+    description: 'Value-first guides and honest product research from Young Money.',
+    url: 'https://guides.shoppersspotllc.com/guides',
+    siteName: 'Young Money Guides',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Young Money Guides — Honest Reviews & Research',
+    description: 'Value-first guides and honest product research from Young Money.',
+  },
 };
 
 export default function GuidesIndex() {

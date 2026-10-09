@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /guides
+Allow: /guides/
+Disallow: /api/
+Disallow: /_next/
+
+Sitemap: https://guides.shoppersspotllc.com/sitemap.xml
