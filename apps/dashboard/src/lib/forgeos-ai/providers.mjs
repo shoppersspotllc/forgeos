@@ -116,7 +116,11 @@ class Provider {
 
   /** Circuit breaker: should we attempt this provider? */
   async geminiChat(messages, options = {}) {
-    const model = options.model || 'gemini-2.5-flash';
+    // Use Gemini default unless caller specifies a valid Gemini model.
+    // Ignores Ollama-specific defaults (e.g., llama3.2:1b) injected by the route.
+    const model = (options.model && options.model.startsWith('gemini-'))
+      ? options.model
+      : 'gemini-2.5-flash';
     const key = vault.getInternal(this.id);
     const contents = messages.filter(m => m.role !== 'system').map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
@@ -125,10 +129,13 @@ class Provider {
     const sys = messages.find(m => m.role === 'system');
     const body = { contents };
     if (sys) body.systemInstruction = { parts: [{ text: sys.content }] };
-    const url = `${this.baseUrl}/models/${model}:generateContent?key=${key}`;
+    const url = `${this.baseUrl}/models/${model}:generateContent`;
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': key,
+      },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(options.timeout || this.timeout),
     });
