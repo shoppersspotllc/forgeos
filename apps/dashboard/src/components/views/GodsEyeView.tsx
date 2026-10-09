@@ -20,12 +20,17 @@ export function GodsEyeView() {
     setChecking(true);
     setReachable(null);
     try {
-      // Probe via same-origin API to avoid CORS issues; falls back to unknown
-      const res = await fetch('/api/godseye/status', { signal: AbortSignal.timeout(8000) });
-      const data = await res.json();
-      setReachable(data.reachable === true);
+      // Client-side probe: the user's browser must be on the Tailscale
+      // network to reach God's Eye. Vercel's servers cannot reach it,
+      // so a server-side check would always report offline.
+      // no-cors gives an opaque response on success; failure rejects.
+      await fetch(GODS_EYE_URL, {
+        mode: 'no-cors',
+        signal: AbortSignal.timeout(5000),
+      });
+      setReachable(true);
     } catch {
-      setReachable(null);
+      setReachable(false);
     }
     setChecking(false);
   };
@@ -80,10 +85,16 @@ export function GodsEyeView() {
               </div>
             )}
             {reachable === false && (
-              <p className="text-xs mt-3 flex items-center justify-center gap-2" style={{ color: 'var(--warning)' }}>
-                <XCircle className="h-3.5 w-3.5" />
-                God's Eye isn't responding. Make sure the app is running on the paired workstation.
-              </p>
+              <div className="mt-3 max-w-md mx-auto">
+                <p className="text-xs flex items-center justify-center gap-2" style={{ color: 'var(--warning)' }}>
+                  <XCircle className="h-3.5 w-3.5 shrink-0" />
+                  God's Eye isn't reachable from this device.
+                </p>
+                <p className="text-xs mt-2 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                  Check: (1) the Windows PC is powered on, (2) the God's Eye app is running on it
+                  (port 4173), (3) this device has Tailscale connected.
+                </p>
+              </div>
             )}
             {reachable === true && (
               <p className="text-xs mt-3 flex items-center justify-center gap-2" style={{ color: 'var(--success)' }}>

@@ -36,6 +36,21 @@ export function HealthView() {
       checks.map(async (c) => {
         const start = performance.now();
         try {
+          // God's Eye must be probed client-side: Vercel's servers are not on
+          // the Tailscale network, so a server-side check always fails.
+          // no-cors gives an opaque response on success; failure rejects.
+          if (c.endpoint === '/api/godseye/status') {
+            await fetch('http://100.87.82.46:4173', {
+              mode: 'no-cors',
+              signal: AbortSignal.timeout(5000),
+            });
+            return {
+              name: c.name,
+              endpoint: c.endpoint,
+              online: true,
+              latencyMs: Math.round(performance.now() - start),
+            } as ServiceStatus;
+          }
           const res = await fetch(c.endpoint, { signal: AbortSignal.timeout(8000) });
           const latency = Math.round(performance.now() - start);
           const data = await res.json().catch(() => ({}));
@@ -51,7 +66,7 @@ export function HealthView() {
           return {
             name: c.name,
             endpoint: c.endpoint,
-            online: res.ok,
+            online,
             latencyMs: latency,
             detail: data.version ? `v${data.version}` : undefined,
           } as ServiceStatus;
