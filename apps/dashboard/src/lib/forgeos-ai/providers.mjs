@@ -370,11 +370,14 @@ class Provider {
         const latency = Date.now() - start;
 
         if (!res.ok) {
-          if (res.status === 401 || res.status === 403) {
-            // Auth failure — don't retry, mark needs configuration
-            const err = new Error(`${this.label}: authentication failed (${res.status})`);
-            this.recordFailure(err.message);
-            this.state = ProviderState.NEEDS_CONFIGURATION;
+          // Phase 3: Don't retry client errors (only retry 408 and 5xx)
+          if (res.status === 400 || res.status === 401 || res.status === 403 || res.status === 404 || res.status === 429) {
+            const err = new Error(`${this.label}: HTTP ${res.status} (no retry)`);
+            // Mark 401/403 as needs configuration
+            if (res.status === 401 || res.status === 403) {
+              this.recordFailure(err.message);
+              this.state = ProviderState.NEEDS_CONFIGURATION;
+            }
             throw err;
           }
           throw new Error(`${this.label}: HTTP ${res.status}`);
@@ -385,9 +388,9 @@ class Provider {
       } catch (e) {
         clearTimeout(timer);
         lastError = e;
-        // Don't retry auth failures
+        // Phase 3: Don't retry client errors, auth failures, or circuit-open
+        if (e.message.includes('(no retry)')) throw e;
         if (e.message.includes('authentication failed')) throw e;
-        // Don't retry circuit-open
         if (e.message.includes('circuit breaker')) throw e;
       }
     }
@@ -497,6 +500,9 @@ class ProviderPool {
   async route(messages, options = {}) {
     const capability = options.capability || CAPABILITIES.CHAT;
     const startTime = Date.now();
+    // Phase 3: Hard overall deadline (50s, under 60s maxDuration)
+    const OVERALL_DEADLINE_MS = 50000;
+    const deadline = startTime + OVERALL_DEADLINE_MS;
 
     // Validate capability is supported by at least one configured provider
     const capableProviders = this.sorted().filter(p => p.isConfigured() && p.supports(capability));
@@ -522,6 +528,12 @@ class ProviderPool {
     let fallbackUsed = false;
 
     for (let i = 0; i < candidates.length; i++) {
+      // Phase 3: Enforce overall deadline
+      if (Date.now() >= deadline) {
+        const err = new Error('ForgeOS AI request deadline exceeded');
+        err.statusCode = 504;
+        throw err;
+      }
       const provider = candidates[i];
       if (i > 0) fallbackUsed = true;
       try {
