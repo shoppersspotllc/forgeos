@@ -25,11 +25,19 @@ import {
  */
 
 // Admin token from env (never in code)
+// Phase 4: Timing-safe comparison prevents timing attacks on admin token
+import { timingSafeEqual } from 'crypto';
 function checkAdmin(req: NextRequest): boolean {
   const adminToken = process.env.FORGEOS_ADMIN_TOKEN;
   if (!adminToken) return false;
   const header = req.headers.get('authorization') || '';
-  return header === `Bearer ${adminToken}`;
+  const expected = `Bearer ${adminToken}`;
+  if (header.length !== expected.length) return false;
+  try {
+    return timingSafeEqual(Buffer.from(header, 'utf8'), Buffer.from(expected, 'utf8'));
+  } catch {
+    return false;
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -75,6 +83,6 @@ export async function POST(req: NextRequest) {
     created: issued.created,
     hash: issued.hash, // Add this to FORGEOS_SERVICE_KEYS JSON
     instructions:
-      'Add {"<keyId>":{"hash":"<hash>","name":"<name>","created":"<created>","revoked":false}} to FORGEOS_SERVICE_KEYS env var in Vercel, then redeploy. Give the "key" value to the platform. Never commit it.',
+      'Add {"<keyId>":{"hash":"<hash>","name":"<name>","created":"<created>","expiresAt":null,"revoked":false}} to FORGEOS_SERVICE_KEYS env var in Vercel, then redeploy. Give the "key" value to the platform. Never commit it. Set expiresAt to an ISO 8601 timestamp to enable expiry.',
   });
 }
