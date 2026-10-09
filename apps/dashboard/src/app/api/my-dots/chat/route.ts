@@ -8,7 +8,7 @@ const __MAX_CHARS = 100000;
 // Phase 2.1: Minimal in-memory rate limiter (per-instance, not distributed)
 // For distributed protection, use Vercel KV/Upstash in future.
 const __rateBuckets = new Map();
-function __checkRate(key, maxReq, windowMs) {
+function __checkRate(key: string, maxReq: number, windowMs: number) {
   const now = Date.now();
   const b = __rateBuckets.get(key);
   if (!b || now >= b.resetAt) {
@@ -19,7 +19,7 @@ function __checkRate(key, maxReq, windowMs) {
   b.count++;
   return true;
 }
-function __getIp(req) {
+function __getIp(req: NextRequest) {
   const fwd = req.headers.get('x-forwarded-for');
   if (fwd) return fwd.split(',')[0].trim();
   const real = req.headers.get('x-real-ip');
