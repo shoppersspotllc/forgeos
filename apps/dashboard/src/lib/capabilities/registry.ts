@@ -1,3 +1,4 @@
+// Build trigger: deploy capability layer
 /**
  * ForgeOS Shared Capability Registry
  * 
