@@ -8,7 +8,7 @@ import {
 export const maxDuration = 60;
 // Phase 2.1: Minimal in-memory rate limiter (per-instance)
 const __rateBuckets = new Map();
-function __checkRate(key, maxReq, windowMs) {
+function __checkRate(key: string, maxReq: number, windowMs: number) {
   const now = Date.now();
   const b = __rateBuckets.get(key);
   if (!b || now >= b.resetAt) {
