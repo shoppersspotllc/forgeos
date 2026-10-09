@@ -50,15 +50,21 @@ function DotChat({ dot, onClose }: { dot: Dot; onClose: () => void }) {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/forgeos-ai/chat', {
+      // Calls My Dots' server-side API route, which authenticates to
+      // ForgeOS AI using My Dots' dedicated fk_ credential (server-side only).
+      // The browser never sees the credential and never calls ForgeOS AI directly.
+      // The Dot's persona (system prompt) is constructed server-side.
+      const res = await fetch('/api/my-dots/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [
-            { role: 'system', content: `You are ${dot.name}, a ${dot.role} in the ForgeOS AI workforce. Specialty: ${dot.specialty}. Respond as ${dot.name} would.` },
-            { role: 'user', content: userMsg },
-          ],
-          capability: dot.capability,
+          dot: {
+            name: dot.name,
+            role: dot.role,
+            specialty: dot.specialty,
+            capability: dot.capability,
+          },
+          messages: [{ role: 'user', content: userMsg }],
         }),
         signal: AbortSignal.timeout(120000),
       });
