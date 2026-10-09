@@ -1,4 +1,3 @@
-// Deploy: ForgeOS research API (ES2017-compatible)
 /**
  * ForgeOS Research API — Shared Capability Layer
  * 
