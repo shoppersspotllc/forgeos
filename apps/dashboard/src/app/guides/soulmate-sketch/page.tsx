@@ -90,14 +90,16 @@ export default function SoulmateSketchReview() {
       <h2 style={h2Style}>How Does It Work?</h2>
       <ol style={pStyle}>
         <li><strong>You answer a few questions</strong> — name, date of birth, and what you&apos;re looking for in a partner.</li>
-        <li><strong>The artist creates your sketch</strong> — delivered digitally; check the official site for current delivery times.</li>
+        <li><strong>The artist creates your sketch</strong> — delivered digitally within 24 hours (may extend to 48 hours during high demand, per vendor).</li>
         <li><strong>You receive the drawing + description</strong> — a portrait and a write-up of your soulmate&apos;s traits.</li>
       </ol>
 
       <h2 style={h2Style}>What Does It Cost?</h2>
       <p style={pStyle}>
-        Pricing is typically a one-time payment under $50 for the basic sketch package.
-        (Prices change — check the official page for current pricing.)
+        Per the vendor&apos;s 2026 announcement: <strong>$37 one-time payment</strong> via ClickBank,
+        which includes the hand-drawn digital portrait, written personality reading, and a bonus
+        spiritual guide. An express 6-hour delivery option is available for an additional fee.
+        (Prices may change — the official checkout page has the final price.)
       </p>
 
       <div style={{ textAlign: 'center', margin: '32px 0' }}>
@@ -130,7 +132,7 @@ export default function SoulmateSketchReview() {
           <p style={{ fontWeight: 700, color: '#10b981', margin: '0 0 8px' }}>✓ Pros</p>
           <ul style={{ ...pStyle, margin: 0, paddingLeft: 20 }}>
             <li>Affordable one-time price (under $50)</li>
-            <li>Fast digital delivery (times vary — check official site)</li>
+            <li>Fast digital delivery (24h standard, per vendor)</li>
             <li>Unique, personalized artwork</li>
             <li>Fun gift idea for singles</li>
             <li>No subscription or hidden fees</li>
@@ -175,9 +177,9 @@ export default function SoulmateSketchReview() {
       <div style={{ marginBottom: 16 }}>
         <p style={{ fontWeight: 700, margin: '16px 0 4px' }}>How long does delivery take?</p>
         <p style={pStyle}>
-          Delivery is digital (via email/download). The vendor advertises quick turnaround,
-          but exact timing can vary — check the official site for current delivery estimates
-          before ordering.
+          Per the vendor&apos;s 2026 service announcement: standard delivery within 24 hours of
+          order submission via email. During periods of high demand, delivery may extend to
+          48 hours. An express 6-hour option is available for an additional fee.
         </p>
       </div>
 
@@ -192,8 +194,9 @@ export default function SoulmateSketchReview() {
       <div style={{ marginBottom: 16 }}>
         <p style={{ fontWeight: 700, margin: '16px 0 4px' }}>Is there a refund policy?</p>
         <p style={pStyle}>
-          Refund terms are set by the vendor and may change. Always read the refund policy
-          on the official checkout page before purchasing any digital product.
+          Yes — the service is sold through ClickBank with a <strong>60-day money-back
+          guarantee</strong>. Per the vendor&apos;s announcement, refunds are processed within
+          5–7 business days. Always confirm the current refund terms on the checkout page.
         </p>
       </div>
 
