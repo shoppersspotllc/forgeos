@@ -7,6 +7,30 @@
 
 import { createServer } from 'http';
 import { pool, ProviderState, CAPABILITIES } from './providers.mjs';
+import { createHash } from 'crypto';
+
+// --- ForgeOS-native service authentication (approved security addition) ---
+// Platforms/Dots present: Authorization: Bearer fk_...
+// Validated against FORGEOS_SERVICE_KEYS env var (JSON: keyId -> {hash, name, revoked}).
+// Provider credentials remain server-side. This changes NOTHING about routing.
+function validateServiceCredential(authHeader) {
+  if (!authHeader || typeof authHeader !== 'string') return { valid: false, reason: 'missing_credential' };
+  const m = authHeader.match(/^Bearer\s+(fk_[a-f0-9]{64})$/i);
+  if (!m) return { valid: false, reason: 'invalid_format' };
+  const presentedHash = createHash('sha256').update(m[1]).digest('hex');
+  let registry = {};
+  try {
+    if (process.env.FORGEOS_SERVICE_KEYS) registry = JSON.parse(process.env.FORGEOS_SERVICE_KEYS);
+  } catch { /* no registry */ }
+  for (const [keyId, meta] of Object.entries(registry)) {
+    if (meta.hash === presentedHash) {
+      if (meta.revoked) return { valid: false, reason: 'revoked', keyId };
+      return { valid: true, keyId, name: meta.name };
+    }
+  }
+  return { valid: false, reason: 'invalid_credential' };
+}
+// --- End authentication ---
 
 const PORT = parseInt(process.env.FORGEOS_AI_PORT || '8788', 10);
 const HOST = process.env.FORGEOS_AI_HOST || '127.0.0.1';
@@ -97,6 +121,10 @@ const server = createServer(async (req, res) => {
 
     // --- OpenAI-compatible chat: THE canonical intelligence endpoint ---
     if (path === '/v1/chat/completions' && req.method === 'POST') {
+      const svcAuth = validateServiceCredential(req.headers['authorization']);
+      if (!svcAuth.valid) {
+        return json(res, 401, { error: 'ForgeOS service credential required', code: svcAuth.reason });
+      }
       const body = await readBody(req);
       if (!body.messages || !Array.isArray(body.messages)) {
         return json(res, 400, { error: 'messages array required' });
