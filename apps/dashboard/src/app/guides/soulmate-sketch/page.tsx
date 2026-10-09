@@ -7,6 +7,7 @@
 
 import Link from 'next/link';
 import { isAffiliateLive } from '@/lib/affiliate/config';
+import CtaButton from './CtaButton';
 
 export const metadata = {
   title: 'Soulmate Sketch Review: What It Is & Is It Worth It? (2026)',
@@ -93,9 +94,9 @@ export default function SoulmateSketchReview() {
       </p>
 
       <div style={{ textAlign: 'center', margin: '32px 0' }}>
-        <a href="/api/affiliate/go?tid=soulmate_article" style={ctaStyle}>
+        <CtaButton style={ctaStyle}>
           Check Current Price on the Official Site →
-        </a>
+        </CtaButton>
         {!live && (
           <p style={{ fontSize: 12, color: '#999' }}>(Affiliate link — commission pending setup)</p>
         )}
@@ -136,9 +137,9 @@ export default function SoulmateSketchReview() {
       </p>
 
       <div style={{ textAlign: 'center', margin: '32px 0' }}>
-        <a href="/api/affiliate/go?tid=soulmate_article" style={ctaStyle}>
+        <CtaButton style={ctaStyle}>
           Visit the Official Soulmate Sketch Site →
-        </a>
+        </CtaButton>
       </div>
 
       <div style={{ background: '#f0fdf4', border: '1px solid #10b981', borderRadius: 8, padding: 16, marginTop: 32, fontSize: 14 }}>
