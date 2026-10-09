@@ -1,13 +1,38 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { gatewayChat } from '@/lib/forgeos-ai/gateway-dual';
+import {
+  extractBearerToken,
+  validateServiceKey,
+} from '@/lib/forgeos-ai/service-keys.mjs';
 
 /**
  * Dashboard → ForgeOS AI /v1/chat/completions (dual-mode)
  * Tries the external gateway first, falls back to in-process ProviderPool.
  * All dashboard intelligence requests flow through here → ForgeOS AI → provider.
  * NEVER call providers directly from the dashboard.
+ *
+ * AUTHENTICATION: Requires a valid ForgeOS service credential.
+ *   Authorization: Bearer fk_...
+ * Platforms/Dots authenticate to ForgeOS. They NEVER need provider keys.
  */
 export async function POST(req: NextRequest) {
+  // --- ForgeOS-native authentication ---
+  const token = extractBearerToken(req.headers.get('authorization'));
+  if (!token) {
+    return NextResponse.json(
+      { error: 'ForgeOS service credential required', code: 'missing_credential' },
+      { status: 401 }
+    );
+  }
+  const auth = validateServiceKey(token);
+  if (!auth.valid) {
+    return NextResponse.json(
+      { error: 'Invalid ForgeOS service credential', code: auth.reason },
+      { status: 401 }
+    );
+  }
+  // --- End authentication ---
+
   const body = await req.json();
   // Default to the local Ollama model when none specified (in-process mode
   // has no gateway to resolve a default; the frozen ProviderPool requires
