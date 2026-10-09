@@ -79,6 +79,20 @@ export async function POST(req: NextRequest) {
     });
     const latencyMs = Date.now() - startTime;
 
+    // DIAGNOSTIC NO-FALLBACK ENFORCEMENT:
+    // This endpoint must prove the REQUESTED provider responded, not a fallback.
+    // If the pool fell back to a different provider, reject the result.
+    if (routed.provider !== providerId || routed.fallback === true) {
+      return NextResponse.json({
+        provider: providerId,
+        error: 'Provider fallback detected — diagnostic requires the requested provider',
+        requestedProvider: providerId,
+        actualProvider: routed.provider,
+        fallback: routed.fallback ?? true,
+        latencyMs,
+      }, { status: 502 });
+    }
+
     // Return sanitized result: provider identity + model + latency, not raw credentials
     return NextResponse.json({
       provider: routed.provider,
