@@ -42,6 +42,52 @@ function getIp(req: NextRequest): string {
     || 'unknown';
 }
 
+// SSRF protection: block private/internal network destinations
+function isBlockedUrl(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return 'Invalid URL';
+  }
+  const host = parsed.hostname.toLowerCase();
+  
+  // Block non-http(s) schemes (already checked, but defense in depth)
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return 'Only http/https URLs allowed';
+  }
+  
+  // Block localhost variants
+  if (host === 'localhost' || host === 'localhost.localdomain' || host.endsWith('.localhost')) {
+    return 'Localhost access blocked';
+  }
+  
+  // Block private IPv4 ranges
+  const ipv4 = host.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+  if (ipv4) {
+    const [_, a, b] = ipv4.map(Number);
+    if (a === 127) return 'Loopback access blocked';                    // 127.0.0.0/8
+    if (a === 10) return 'Private network access blocked';              // 10.0.0.0/8
+    if (a === 172 && b >= 16 && b <= 31) return 'Private network access blocked'; // 172.16.0.0/12
+    if (a === 192 && b === 168) return 'Private network access blocked'; // 192.168.0.0/16
+    if (a === 169 && b === 254) return 'Cloud metadata access blocked'; // 169.254.0.0/16
+    if (a === 0) return 'Invalid IP blocked';                           // 0.0.0.0/8
+  }
+  
+  // Block IPv6 loopback and private
+  if (host === '::1' || host === '[::1]') return 'Loopback access blocked';
+  if (host.startsWith('[fe80:') || host.startsWith('[fc00:') || host.startsWith('[fd00:')) {
+    return 'Private IPv6 access blocked';
+  }
+  
+  // Block cloud metadata hostnames
+  if (host === 'metadata.google.internal' || host === 'instance-data') {
+    return 'Cloud metadata access blocked';
+  }
+  
+  return null; // OK
+}
+
 // --- Capability implementations ---
 
 async function webSearch(query: string, limit: number = 10) {
@@ -82,6 +128,10 @@ async function webSearch(query: string, limit: number = 10) {
 async function webRead(url: string, maxChars: number = 8000) {
   if (!url.startsWith('https://') && !url.startsWith('http://')) {
     throw new Error('URL must start with http(s)://');
+  }
+  const blocked = isBlockedUrl(url);
+  if (blocked) {
+    throw new Error(`Blocked URL: ${blocked}`);
   }
   const res = await fetch(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ForgeOS-Research/1.0)' },
@@ -223,6 +273,10 @@ async function redditSearch(query: string, subreddit?: string, limit: number = 1
 }
 
 async function rssFetch(url: string, limit: number = 20) {
+  const blocked = isBlockedUrl(url);
+  if (blocked) {
+    throw new Error(`Blocked URL: ${blocked}`);
+  }
   const res = await fetch(url, {
     headers: { 'User-Agent': 'ForgeOS-Research/1.0' },
     signal: AbortSignal.timeout(12000),
