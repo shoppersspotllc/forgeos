@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
   let body: any = {};
   try {
     body = await req.json();
-  } catch {
+  } catch (_e) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json(data);
   } catch (e: any) {
-    const msg = e?.name === 'AbortError' ? 'request timed out' : e?.message || 'unknown error';
+    const msg = (e && e.name) === 'AbortError' ? 'request timed out' : (e && e.message) || 'unknown error';
     return NextResponse.json(
       { error: `Position AI could not reach ForgeOS AI: ${msg}` },
       { status: 502 }
