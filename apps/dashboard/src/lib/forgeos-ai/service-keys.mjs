@@ -62,7 +62,7 @@ function safeHashEqual(a, b) {
   if (a.length === 0) return false;
   try {
     return timingSafeEqual(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'));
-  } catch {
+  } catch (_e) {
     return false;
   }
 }
@@ -78,7 +78,7 @@ function loadRegistry() {
   if (envJson) {
     try {
       return JSON.parse(envJson);
-    } catch {
+    } catch (_e) {
       // Fall through to file
     }
   }
@@ -87,7 +87,7 @@ function loadRegistry() {
     if (existsSync(SERVICE_KEYS_FILE)) {
       return JSON.parse(readFileSync(SERVICE_KEYS_FILE, 'utf-8'));
     }
-  } catch {
+  } catch (_e) {
     // No registry
   }
   return {};
@@ -158,9 +158,9 @@ export function saveServiceKeyLocal(entry) {
   try {
     const dir = join(SERVICE_KEYS_FILE, '..');
     writeFileSync(SERVICE_KEYS_FILE, JSON.stringify(registry, null, 2), { mode: 0o600 });
-    try { chmodSync(SERVICE_KEYS_FILE, 0o600); } catch { /* best effort */ }
+    try { chmodSync(SERVICE_KEYS_FILE, 0o600); } catch (_e) { /* best effort */ }
     return true;
-  } catch {
+  } catch (_e) {
     return false;
   }
 }
@@ -199,7 +199,7 @@ export function rotateServiceKeyLocal(oldKeyId, options = {}) {
   };
   try {
     writeFileSync(SERVICE_KEYS_FILE, JSON.stringify(registry, null, 2), { mode: 0o600 });
-    try { chmodSync(SERVICE_KEYS_FILE, 0o600); } catch { /* best effort */ }
+    try { chmodSync(SERVICE_KEYS_FILE, 0o600); } catch (_e) { /* best effort */ }
     return {
       success: true,
       key: newKey.key, // PLAINTEXT — show once, never store
@@ -207,7 +207,7 @@ export function rotateServiceKeyLocal(oldKeyId, options = {}) {
       name: newKey.name,
       oldKeyId,
     };
-  } catch {
+  } catch (_e) {
     return { success: false, reason: 'write_failed' };
   }
 }
