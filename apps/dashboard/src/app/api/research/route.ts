@@ -55,8 +55,8 @@ async function webSearch(query: string, limit: number = 10) {
   const html = await res.text();
   
   const results: Array<{title: string; url: string; snippet: string}> = [];
-  const linkRe = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/gs;
-  const snippetRe = /<a[^>]*class="result__snippet"[^>]*>(.*?)<\/a>/s;
+  const linkRe = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+  const snippetRe = /<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>/;
   
   let m;
   let count = 0;
@@ -69,7 +69,7 @@ async function webSearch(query: string, limit: number = 10) {
     
     // Find snippet after this link
     const afterLink = html.substring(m.index, m.index + 2000);
-    const sMatch = afterLink.match(/class="result__snippet"[^>]*>(.*?)<\/a>/s);
+    const sMatch = afterLink.match(/class="result__snippet"[^>]*>([\s\S]*?)<\/a>/);
     const snippet = sMatch ? sMatch[1].replace(/<[^>]+>/g, '').trim().substring(0, 300) : '';
     
     if (title && cleanUrl.startsWith('http')) {
@@ -92,7 +92,7 @@ async function webRead(url: string, maxChars: number = 8000) {
   const html = await res.text();
   
   // Extract title
-  const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/is);
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
   const title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').trim().substring(0, 200) : '';
   
   // Remove scripts, styles, nav, etc.
@@ -180,7 +180,7 @@ async function youtubeTranscript(videoId: string, maxChars: number = 10000) {
   if (!pageRes.ok) throw new Error(`YouTube: ${pageRes.status}`);
   const page = await pageRes.text();
   
-  const captionMatch = page.match(/"captionTracks":\[(.*?)\]/s);
+  const captionMatch = page.match(/"captionTracks":\[([\s\S]*?)\]/);
   if (!captionMatch) throw new Error('No captions available for this video');
   
   const tracks = captionMatch[1];
@@ -192,9 +192,10 @@ async function youtubeTranscript(videoId: string, maxChars: number = 10000) {
   if (!capRes.ok) throw new Error(`Caption fetch: ${capRes.status}`);
   const xml = await capRes.text();
   
-  const textMatches = xml.matchAll(/<text[^>]*>(.*?)<\/text>/gs);
+  const textRe = /<text[^>]*>([\s\S]*?)<\/text>/g;
   let transcript = '';
-  for (const tm of textMatches) {
+  let tm;
+  while ((tm = textRe.exec(xml)) !== null) {
     transcript += tm[1]
       .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
       .replace(/&#39;/g, "'").replace(/&quot;/g, '"')
@@ -231,9 +232,10 @@ async function rssFetch(url: string, limit: number = 20) {
   const xml = await res.text();
   
   const items: Array<{title: string; link: string; published: string; summary: string}> = [];
-  const itemMatches = xml.matchAll(/<item>([\s\S]*?)<\/item>/g);
+  const itemRe = /<item>([\s\S]*?)<\/item>/g;
   let count = 0;
-  for (const im of itemMatches) {
+  let im;
+  while ((im = itemRe.exec(xml)) !== null) {
     if (count >= limit) break;
     const item = im[1];
     const get = (tag: string) => {
