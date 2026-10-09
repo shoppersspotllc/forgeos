@@ -67,6 +67,13 @@ export default function SoulmateSketchReview() {
         Our review is independent — here's exactly what we found.
       </div>
 
+      <div style={{ background: '#f0fdf4', border: '1px solid #10b981', borderRadius: 8, padding: 20, marginBottom: 28, textAlign: 'center' }}>
+        <p style={{ margin: '0 0 12px', fontWeight: 600 }}>Want the short version? Here&apos;s where to get it:</p>
+        <CtaButton style={ctaStyle}>
+          Check Soulmate Sketch on the Official Site →
+        </CtaButton>
+      </div>
+
       <h2 style={h2Style}>What Is Soulmate Sketch?</h2>
       <p style={pStyle}>
         Soulmate Sketch is a service where a self-described psychic artist creates a hand-drawn
@@ -116,6 +123,30 @@ export default function SoulmateSketchReview() {
         <li>You dislike anything in the psychic/spiritual space</li>
       </ul>
 
+      <h2 style={h2Style}>Quick Pros &amp; Cons</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 8 }}>
+        <div style={{ background: '#f0fdf4', border: '1px solid #10b981', borderRadius: 8, padding: 16 }}>
+          <p style={{ fontWeight: 700, color: '#10b981', margin: '0 0 8px' }}>✓ Pros</p>
+          <ul style={{ ...pStyle, margin: 0, paddingLeft: 20 }}>
+            <li>Affordable one-time price (under $50)</li>
+            <li>Fast digital delivery (24–48 hours)</li>
+            <li>Unique, personalized artwork</li>
+            <li>Fun gift idea for singles</li>
+            <li>No subscription or hidden fees</li>
+          </ul>
+        </div>
+        <div style={{ background: '#fef2f2', border: '1px solid #ef4444', borderRadius: 8, padding: 16 }}>
+          <p style={{ fontWeight: 700, color: '#ef4444', margin: '0 0 8px' }}>✗ Cons</p>
+          <ul style={{ ...pStyle, margin: 0, paddingLeft: 20 }}>
+            <li>No scientific basis for accuracy</li>
+            <li>Digital only (no physical print)</li>
+            <li>Results are subjective by nature</li>
+            <li>Not for skeptics of psychic services</li>
+            <li>Refund terms vary — check before buying</li>
+          </ul>
+        </div>
+      </div>
+
       <h2 style={h2Style}>The Honest Take</h2>
       <p style={pStyle}>
         Let&apos;s be straight: there&apos;s no scientific evidence that a psychic can draw your
@@ -128,6 +159,49 @@ export default function SoulmateSketchReview() {
         for a guaranteed path to love, no sketch will give you that — and anyone who claims
         otherwise isn&apos;t being honest with you.
       </p>
+
+      <h2 style={h2Style}>Frequently Asked Questions</h2>
+
+      <div style={{ marginBottom: 16 }}>
+        <p style={{ fontWeight: 700, margin: '16px 0 4px' }}>Is Soulmate Sketch a scam?</p>
+        <p style={pStyle}>
+          No — you receive a real product (a digital sketch and written reading) for your payment.
+          However, there is no scientific evidence behind the psychic claims. Treat it as
+          entertainment, not a guaranteed prediction.
+        </p>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <p style={{ fontWeight: 700, margin: '16px 0 4px' }}>How long does delivery take?</p>
+        <p style={pStyle}>
+          Typically 24–48 hours via email as a digital download. Delivery times can vary —
+          check the official site for current estimates.
+        </p>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <p style={{ fontWeight: 700, margin: '16px 0 4px' }}>What do I need to provide?</p>
+        <p style={pStyle}>
+          Your name, date of birth, and answers to a short questionnaire about your
+          preferences. No photo is required.
+        </p>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <p style={{ fontWeight: 700, margin: '16px 0 4px' }}>Is there a refund policy?</p>
+        <p style={pStyle}>
+          Refund terms are set by the vendor and may change. Always read the refund policy
+          on the official checkout page before purchasing any digital product.
+        </p>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <p style={{ fontWeight: 700, margin: '16px 0 4px' }}>Is this right for skeptics?</p>
+        <p style={pStyle}>
+          Probably not. If you don&apos;t enjoy psychic or spiritual entertainment, you won&apos;t
+          get value from this. It&apos;s designed for the curious and open-minded.
+        </p>
+      </div>
 
       <h2 style={h2Style}>Bottom Line</h2>
       <p style={pStyle}>
