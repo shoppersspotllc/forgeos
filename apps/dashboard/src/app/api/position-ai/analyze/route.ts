@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, getClientIp } from '@/lib/forgeos-ai/rate-limit.mjs';
+
+// Vercel: max 60s execution (Hobby plan limit)
+export const maxDuration = 60;
 
 /**
  * Position AI — Strategic Intelligence API
@@ -24,7 +28,16 @@ const FORGEOS_AI_CHAT = 'https://forgeos.shoppersspotllc.com/api/forgeos-ai/chat
 const POSITION_SYSTEM_PROMPT =
   'You are Position AI, a strategic intelligence analyst for ForgeOS. Provide concise strategic positioning analysis.';
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest)  {
+  // Rate limiting: 30 requests/minute per IP (Phase 1 hardening)
+  const clientIp = getClientIp(req);
+  const rateLimit = checkRateLimit(`consumer:${clientIp}`, { maxRequests: 30, windowMs: 60000 });
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Please try again later.', retryAfter: rateLimit.retryAfter },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter || 60) } }
+    );
+  }
   let body: any = {};
   try {
     body = await req.json();
@@ -68,7 +81,7 @@ export async function POST(req: NextRequest) {
         messages,
         capability: 'chat',
       }),
-      signal: AbortSignal.timeout(120000),
+      signal: AbortSignal.timeout(50000),
     });
 
     const data = await res.json().catch(() => ({}));
