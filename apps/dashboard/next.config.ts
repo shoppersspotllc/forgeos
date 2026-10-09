@@ -53,11 +53,17 @@ const nextConfig: NextConfig = {
       { source: "/gods-eye/:path*", destination: `${GODSEYE_UPSTREAM}/gods-eye-view/:path*` },
       // God's Eye absolute asset URLs (/gods-eye-view/...)
       { source: "/gods-eye-view/:path*", destination: `${GODSEYE_UPSTREAM}/gods-eye-view/:path*` },
-      // God's Eye API routes
-      ...GODSEYE_API_ROUTES.map((r) => ({
-        source: `/api/${r}/:path*`,
-        destination: `${GODSEYE_UPSTREAM}/api/${r}/:path*`,
-      })),
+      // God's Eye API routes (bare path + subpaths; :path* alone misses the bare path)
+      ...GODSEYE_API_ROUTES.flatMap((r) => [
+        {
+          source: `/api/${r}`,
+          destination: `${GODSEYE_UPSTREAM}/api/${r}`,
+        },
+        {
+          source: `/api/${r}/:path*`,
+          destination: `${GODSEYE_UPSTREAM}/api/${r}/:path*`,
+        },
+      ]),
     ];
   },
 };
