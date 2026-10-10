@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * TurnoverPro Booking Flow
+ * Turnvia Booking Flow
  * Step 1: Select package → Step 2: Add-ons → Step 3: Details & date → Step 4: Stripe Checkout
  */
 
@@ -63,7 +63,7 @@ function BookingFlow() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/apps/turnoverpro/checkout', {
+      const res = await fetch('/api/apps/turnvia/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

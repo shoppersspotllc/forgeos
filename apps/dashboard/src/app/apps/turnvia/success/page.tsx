@@ -1,12 +1,12 @@
 /**
- * TurnoverPro Booking Success Page
+ * Turnvia Booking Success Page
  * Shown after Stripe Checkout completes.
  */
 
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Booking Confirmed — TurnoverPro',
+  title: 'Booking Confirmed — Turnvia',
 };
 
 export default function SuccessPage({
@@ -47,10 +47,10 @@ export default function SuccessPage({
       </div>
 
       <Link
-        href="/apps/turnoverpro"
+        href="/apps/turnvia"
         style={{ display: 'inline-block', color: '#0f766e', fontWeight: 600, textDecoration: 'none' }}
       >
-        ← Back to TurnoverPro
+        ← Back to Turnvia
       </Link>
     </div>
   );

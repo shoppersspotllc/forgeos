@@ -1,15 +1,15 @@
 /**
- * TurnoverPro — Move-out cleaning & rental turnover
+ * Turnvia — Move-out cleaning & rental turnover
  * Young Money Five-App Revenue Initiative — App #1
  *
  * Independent app with its own identity, booking flow, and Stripe integration.
- * Route: /apps/turnoverpro
+ * Route: /apps/turnvia
  */
 
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'TurnoverPro — Move-Out Cleaning & Rental Turnover',
+  title: 'Turnvia — Move-Out Cleaning & Rental Turnover',
   description:
     'Professional move-out cleaning for renters, landlords, and property managers. Book online, upfront pricing, satisfaction guaranteed.',
 };
@@ -65,13 +65,13 @@ const addons = [
   { id: 'pet', name: 'Pet Hair Treatment', price: 30 },
 ];
 
-export default function TurnoverProHome() {
+export default function TurnviaHome() {
   return (
     <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1a1a1a', lineHeight: 1.6 }}>
       {/* Hero */}
       <div style={{ background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)', color: '#fff', padding: '80px 24px', textAlign: 'center' }}>
         <p style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 3, opacity: 0.9, margin: '0 0 16px' }}>
-          Young Money · TurnoverPro
+          Young Money · Turnvia
         </p>
         <h1 style={{ fontSize: 44, fontWeight: 800, margin: '0 0 16px', lineHeight: 1.2 }}>
           Move-Out Cleaning,<br />Done Right.
@@ -81,7 +81,7 @@ export default function TurnoverProHome() {
           Book in 2 minutes. Get your deposit back.
         </p>
         <Link
-          href="/apps/turnoverpro/book"
+          href="/apps/turnvia/book"
           style={{ display: 'inline-block', background: '#fff', color: '#0f766e', padding: '16px 40px', borderRadius: 10, fontWeight: 700, fontSize: 18, textDecoration: 'none' }}
         >
           Book Your Cleaning →
@@ -127,7 +127,7 @@ export default function TurnoverProHome() {
                 ))}
               </ul>
               <Link
-                href={`/apps/turnoverpro/book?package=${pkg.id}`}
+                href={`/apps/turnvia/book?package=${pkg.id}`}
                 style={{ display: 'block', textAlign: 'center', background: pkg.popular ? '#14b8a6' : '#f0fdfa', color: pkg.popular ? '#fff' : '#0f766e', padding: '12px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', border: pkg.popular ? 'none' : '1px solid #14b8a6' }}
               >
                 Select {pkg.name}
@@ -179,7 +179,7 @@ export default function TurnoverProHome() {
           Ready for a Spotless Move-Out?
         </h2>
         <Link
-          href="/apps/turnoverpro/book"
+          href="/apps/turnvia/book"
           style={{ display: 'inline-block', background: '#0f766e', color: '#fff', padding: '16px 48px', borderRadius: 10, fontWeight: 700, fontSize: 18, textDecoration: 'none' }}
         >
           Book Now →
@@ -188,8 +188,8 @@ export default function TurnoverProHome() {
 
       {/* Footer */}
       <footer style={{ borderTop: '1px solid #e5e5e5', padding: '32px 24px', textAlign: 'center', color: '#888', fontSize: 14 }}>
-        <p>© 2026 TurnoverPro · A Young Money Business · Shopper's Spot LLC</p>
-        <p>Questions? Email hello@turnoverpro.co</p>
+        <p>© 2026 Turnvia · A Young Money Business · Shopper's Spot LLC</p>
+        <p>Questions? Email hello@turnvia.co</p>
       </footer>
     </div>
   );

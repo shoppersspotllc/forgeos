@@ -1,8 +1,8 @@
 /**
- * TurnoverPro Stripe Webhook Handler (TEST MODE MVP)
+ * Turnvia Stripe Webhook Handler (TEST MODE MVP)
  * Receives payment completion events from Stripe.
  *
- * POST /api/apps/turnoverpro/webhook
+ * POST /api/apps/turnvia/webhook
  * Verifies Stripe signature, records completed bookings.
  *
  * DATA INTEGRITY NOTICE:
@@ -40,9 +40,9 @@ function verifySignature(payload: string, signature: string, secret: string): bo
 }
 
 export async function POST(req: NextRequest) {
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET_TURNOVERPRO;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET_TURNVIA;
   if (!webhookSecret) {
-    console.error('TurnoverPro webhook secret not configured');
+    console.error('Turnvia webhook secret not configured');
     return NextResponse.json({ error: 'Webhook not configured' }, { status: 503 });
   }
 
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
   const signature = req.headers.get('stripe-signature') || '';
 
   if (!verifySignature(payload, signature, webhookSecret)) {
-    console.error('TurnoverPro webhook: invalid signature');
+    console.error('Turnvia webhook: invalid signature');
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
@@ -62,20 +62,20 @@ export async function POST(req: NextRequest) {
     // For MVP: track processed event IDs in memory (resets on deploy — acceptable for test mode).
     const eventId = event.id;
     if (!eventId) {
-      console.error('TurnoverPro webhook: missing event ID');
+      console.error('Turnvia webhook: missing event ID');
       return NextResponse.json({ error: 'Invalid event' }, { status: 400 });
     }
 
     // In-memory deduplication (use Redis/DB in production)
-    const globalStore = globalThis as unknown as { __turnoverpro_events?: Set<string> };
-    if (!globalStore.__turnoverpro_events) {
-      globalStore.__turnoverpro_events = new Set();
+    const globalStore = globalThis as unknown as { __turnvia_events?: Set<string> };
+    if (!globalStore.__turnvia_events) {
+      globalStore.__turnvia_events = new Set();
     }
-    if (globalStore.__turnoverpro_events.has(eventId)) {
-      console.log(`TurnoverPro webhook: duplicate event ${eventId} ignored`);
+    if (globalStore.__turnvia_events.has(eventId)) {
+      console.log(`Turnvia webhook: duplicate event ${eventId} ignored`);
       return NextResponse.json({ received: true, duplicate: true });
     }
-    globalStore.__turnoverpro_events.add(eventId);
+    globalStore.__turnvia_events.add(eventId);
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
@@ -83,12 +83,12 @@ export async function POST(req: NextRequest) {
 
       // Verify this is a test-mode payment (defense in depth)
       if (session.livemode) {
-        console.error('TurnoverPro webhook: BLOCKED live-mode payment in test MVP');
+        console.error('Turnvia webhook: BLOCKED live-mode payment in test MVP');
         return NextResponse.json({ error: 'Live payments not accepted' }, { status: 400 });
       }
 
       const booking = {
-        app: 'turnoverpro',
+        app: 'turnvia',
         stripeSessionId: session.id,
         stripeEventId: eventId,
         amountTotal: session.amount_total,
@@ -108,14 +108,14 @@ export async function POST(req: NextRequest) {
 
       // Log booking (MVP: console + in-memory. Production needs persistent DB.)
       // WARNING: Bookings are lost on server restart/deploy. This is test-mode only.
-      console.log('TurnoverPro booking completed:', JSON.stringify(booking));
+      console.log('Turnvia booking completed:', JSON.stringify(booking));
 
       // Store in-memory for retrieval via API (lost on restart)
-      const bookingStore = globalThis as unknown as { __turnoverpro_bookings?: Array<object> };
-      if (!bookingStore.__turnoverpro_bookings) {
-        bookingStore.__turnoverpro_bookings = [];
+      const bookingStore = globalThis as unknown as { __turnvia_bookings?: Array<object> };
+      if (!bookingStore.__turnvia_bookings) {
+        bookingStore.__turnvia_bookings = [];
       }
-      bookingStore.__turnoverpro_bookings.push(booking);
+      bookingStore.__turnvia_bookings.push(booking);
 
       // TODO (production): Write to persistent database
       // TODO (production): Send confirmation email — NOT IMPLEMENTED in MVP
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (err) {
-    console.error('TurnoverPro webhook error:', err);
+    console.error('Turnvia webhook error:', err);
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
   }
 }

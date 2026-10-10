@@ -1,8 +1,8 @@
 /**
- * TurnoverPro Bookings API (TEST MODE)
+ * Turnvia Bookings API (TEST MODE)
  * Returns recorded bookings from webhook events.
  *
- * GET /api/apps/turnoverpro/bookings
+ * GET /api/apps/turnvia/bookings
  *
  * WARNING: In-memory only. Bookings are lost on server restart/deploy.
  * This is acceptable for test-mode MVP validation only.
@@ -12,8 +12,8 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const store = globalThis as unknown as { __turnoverpro_bookings?: Array<object> };
-  const bookings = store.__turnoverpro_bookings || [];
+  const store = globalThis as unknown as { __turnvia_bookings?: Array<object> };
+  const bookings = store.__turnvia_bookings || [];
 
   // Strip sensitive fields before returning
   const safe = bookings.map((b: Record<string, unknown>) => ({

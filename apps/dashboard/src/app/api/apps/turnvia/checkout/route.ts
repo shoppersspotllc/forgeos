@@ -1,8 +1,8 @@
 /**
- * TurnoverPro Stripe Checkout API
+ * Turnvia Stripe Checkout API
  * Creates a Stripe Checkout Session in TEST MODE for a cleaning booking.
  *
- * POST /api/apps/turnoverpro/checkout
+ * POST /api/apps/turnvia/checkout
  * Body: { packageId, addons[], customer: { name, email, phone, address, date, notes } }
  * Returns: { url } (Stripe Checkout URL) or { error }
  */
@@ -26,18 +26,18 @@ const ADDONS: Record<string, { name: string; price: number }> = {
 // In-memory rate limiter: 10 requests per IP per minute
 // Free, zero infrastructure. Resets on deploy (acceptable for MVP).
 const rateLimitStore = globalThis as unknown as {
-  __turnoverpro_ratelimit?: Map<string, number[]>;
+  __turnvia_ratelimit?: Map<string, number[]>;
 };
 
 function isRateLimited(ip: string): boolean {
-  if (!rateLimitStore.__turnoverpro_ratelimit) {
-    rateLimitStore.__turnoverpro_ratelimit = new Map();
+  if (!rateLimitStore.__turnvia_ratelimit) {
+    rateLimitStore.__turnvia_ratelimit = new Map();
   }
   const now = Date.now();
   const window = 60 * 1000; // 1 minute
   const maxRequests = 10;
 
-  const timestamps = rateLimitStore.__turnoverpro_ratelimit.get(ip) || [];
+  const timestamps = rateLimitStore.__turnvia_ratelimit.get(ip) || [];
   const recent = timestamps.filter((t) => now - t < window);
 
   if (recent.length >= maxRequests) {
@@ -45,7 +45,7 @@ function isRateLimited(ip: string): boolean {
   }
 
   recent.push(now);
-  rateLimitStore.__turnoverpro_ratelimit.set(ip, recent);
+  rateLimitStore.__turnvia_ratelimit.set(ip, recent);
   return false;
 }
 
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
 
     // SAFETY: Enforce test mode — never allow live keys in this MVP
     if (!stripeKey.startsWith('sk_test_')) {
-      console.error('TurnoverPro: BLOCKED — non-test Stripe key detected. Live payments are disabled.');
+      console.error('Turnvia: BLOCKED — non-test Stripe key detected. Live payments are disabled.');
       return NextResponse.json(
         { error: 'Payment system is in test mode only.' },
         { status: 503 }
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
       {
         price_data: {
           currency: 'usd',
-          product_data: { name: `TurnoverPro: ${pkg.name}` },
+          product_data: { name: `Turnvia: ${pkg.name}` },
           unit_amount: pkg.price,
         },
         quantity: 1,
@@ -124,8 +124,8 @@ export async function POST(req: NextRequest) {
     const params = new URLSearchParams();
     params.append('mode', 'payment');
     params.append('customer_email', customer.email);
-    params.append('success_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/turnoverpro/success?session_id={CHECKOUT_SESSION_ID}`);
-    params.append('cancel_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/turnoverpro/book?cancelled=1`);
+    params.append('success_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/turnvia/success?session_id={CHECKOUT_SESSION_ID}`);
+    params.append('cancel_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/turnvia/book?cancelled=1`);
     params.append('metadata[package_id]', packageId);
     params.append('metadata[customer_name]', customer.name);
     params.append('metadata[property_address]', customer.address);
