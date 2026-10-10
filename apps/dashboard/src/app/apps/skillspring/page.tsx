@@ -1,5 +1,5 @@
 /**
- * SkillVault Landing Page
+ * SkillSpring Landing Page
  * Premium specialist content and learning.
  */
 
@@ -29,10 +29,10 @@ const COURSES = [
   },
 ];
 
-export default function SkillVaultPage() {
+export default function SkillSpringPage() {
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px', fontFamily: 'system-ui' }}>
-      <h1 style={{ fontSize: 36, marginBottom: 8 }}>SkillVault</h1>
+      <h1 style={{ fontSize: 36, marginBottom: 8 }}>SkillSpring</h1>
       <p style={{ fontSize: 18, color: '#666', marginBottom: 32 }}>
         Specialist knowledge, unlocked. Premium courses from real practitioners.
       </p>
@@ -59,12 +59,12 @@ export default function SkillVaultPage() {
               <div style={{ fontSize: 28, fontWeight: 'bold' }}>${course.price}</div>
               <div style={{ fontSize: 12, color: '#888' }}>one-time</div>
               <Link
-                href={`/apps/skillvault/enroll?course=${course.id}`}
+                href={`/apps/skillspring/enroll?course=${course.id}`}
                 style={{
                   display: 'inline-block',
                   marginTop: 8,
                   padding: '10px 24px',
-                  background: '#0070f3',
+                  background: '#7c3aed',
                   color: 'white',
                   borderRadius: 8,
                   textDecoration: 'none',

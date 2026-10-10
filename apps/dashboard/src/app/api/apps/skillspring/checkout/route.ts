@@ -1,8 +1,8 @@
 /**
- * SkillVault Checkout API
+ * SkillSpring Checkout API
  * Creates a Stripe Checkout Session in TEST MODE for course enrollment.
  *
- * POST /api/apps/skillvault/checkout
+ * POST /api/apps/skillspring/checkout
  * Body: { courseId, customer: { name, email } }
  */
 
@@ -15,21 +15,21 @@ const COURSES: Record<string, { name: string; price: number }> = {
 };
 
 const rateLimitStore = globalThis as unknown as {
-  __skillvault_ratelimit?: Map<string, number[]>;
+  __skillspring_ratelimit?: Map<string, number[]>;
 };
 
 function isRateLimited(ip: string): boolean {
-  if (!rateLimitStore.__skillvault_ratelimit) {
-    rateLimitStore.__skillvault_ratelimit = new Map();
+  if (!rateLimitStore.__skillspring_ratelimit) {
+    rateLimitStore.__skillspring_ratelimit = new Map();
   }
   const now = Date.now();
   const window = 60 * 1000;
   const maxRequests = 10;
-  const timestamps = rateLimitStore.__skillvault_ratelimit.get(ip) || [];
+  const timestamps = rateLimitStore.__skillspring_ratelimit.get(ip) || [];
   const recent = timestamps.filter((t) => now - t < window);
   if (recent.length >= maxRequests) return true;
   recent.push(now);
-  rateLimitStore.__skillvault_ratelimit.set(ip, recent);
+  rateLimitStore.__skillspring_ratelimit.set(ip, recent);
   return false;
 }
 
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Payment system not configured.' }, { status: 503 });
     }
     if (!stripeKey.startsWith('sk_test_')) {
-      console.error('SkillVault: BLOCKED — non-test Stripe key.');
+      console.error('SkillSpring: BLOCKED — non-test Stripe key.');
       return NextResponse.json({ error: 'Payment system is in test mode only.' }, { status: 503 });
     }
 
@@ -68,8 +68,8 @@ export async function POST(req: NextRequest) {
     const params = new URLSearchParams();
     params.append('mode', 'payment');
     params.append('customer_email', customer.email);
-    params.append('success_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/skillvault/success?session_id={CHECKOUT_SESSION_ID}`);
-    params.append('cancel_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/skillvault/enroll?cancelled=1`);
+    params.append('success_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/skillspring/success?session_id={CHECKOUT_SESSION_ID}`);
+    params.append('cancel_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/skillspring/enroll?cancelled=1`);
     params.append('metadata[course_id]', courseId);
     params.append('metadata[customer_name]', customer.name);
     params.append('line_items[0][price_data][currency]', 'usd');

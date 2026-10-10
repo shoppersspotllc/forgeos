@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const store = globalThis as unknown as { __skillvault_enrollments?: Array<object> };
-  const enrollments = store.__skillvault_enrollments || [];
+  const store = globalThis as unknown as { __skillspring_enrollments?: Array<object> };
+  const enrollments = store.__skillspring_enrollments || [];
   const safe = enrollments.map((e: Record<string, unknown>) => ({
     app: e.app,
     courseId: e.courseId,

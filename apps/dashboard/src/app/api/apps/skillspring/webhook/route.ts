@@ -1,6 +1,6 @@
 /**
- * SkillVault Stripe Webhook Handler (TEST MODE MVP)
- * POST /api/apps/skillvault/webhook
+ * SkillSpring Stripe Webhook Handler (TEST MODE MVP)
+ * POST /api/apps/skillspring/webhook
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -25,7 +25,7 @@ function verifySignature(payload: string, signature: string, secret: string): bo
 }
 
 export async function POST(req: NextRequest) {
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET_SKILLVAULT;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET_SKILLSPRING;
   if (!webhookSecret) {
     return NextResponse.json({ error: 'Webhook not configured' }, { status: 503 });
   }
@@ -41,12 +41,12 @@ export async function POST(req: NextRequest) {
     const eventId = event.id;
     if (!eventId) return NextResponse.json({ error: 'Invalid event' }, { status: 400 });
 
-    const gs = globalThis as unknown as { __skillvault_events?: Set<string> };
-    if (!gs.__skillvault_events) gs.__skillvault_events = new Set();
-    if (gs.__skillvault_events.has(eventId)) {
+    const gs = globalThis as unknown as { __skillspring_events?: Set<string> };
+    if (!gs.__skillspring_events) gs.__skillspring_events = new Set();
+    if (gs.__skillspring_events.has(eventId)) {
       return NextResponse.json({ received: true, duplicate: true });
     }
-    gs.__skillvault_events.add(eventId);
+    gs.__skillspring_events.add(eventId);
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       }
       const meta = session.metadata || {};
       const enrollment = {
-        app: 'skillvault',
+        app: 'skillspring',
         stripeSessionId: session.id,
         amountTotal: session.amount_total,
         currency: session.currency,
@@ -65,15 +65,15 @@ export async function POST(req: NextRequest) {
         enrolledAt: new Date().toISOString(),
         testMode: true,
       };
-      console.log('SkillVault enrollment completed:', JSON.stringify(enrollment));
-      const store = globalThis as unknown as { __skillvault_enrollments?: Array<object> };
-      if (!store.__skillvault_enrollments) store.__skillvault_enrollments = [];
-      store.__skillvault_enrollments.push(enrollment);
+      console.log('SkillSpring enrollment completed:', JSON.stringify(enrollment));
+      const store = globalThis as unknown as { __skillspring_enrollments?: Array<object> };
+      if (!store.__skillspring_enrollments) store.__skillspring_enrollments = [];
+      store.__skillspring_enrollments.push(enrollment);
     }
 
     return NextResponse.json({ received: true });
   } catch (err) {
-    console.error('SkillVault webhook error:', err);
+    console.error('SkillSpring webhook error:', err);
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
   }
 }

@@ -24,7 +24,7 @@ export default function SuccessPage() {
           <li>This was a Stripe test transaction only</li>
         </ul>
       </div>
-      <Link href="/apps/skillvault" style={{ color: '#0070f3' }}>← Back to SkillVault</Link>
+      <Link href="/apps/skillspring" style={{ color: '#7c3aed' }}>← Back to SkillSpring</Link>
     </div>
   );
 }

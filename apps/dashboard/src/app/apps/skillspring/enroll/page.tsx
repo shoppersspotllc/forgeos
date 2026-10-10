@@ -23,7 +23,7 @@ export default function EnrollPage() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('/api/apps/skillvault/checkout', {
+      const res = await fetch('/api/apps/skillspring/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ courseId, customer: { name, email } }),
@@ -44,7 +44,7 @@ export default function EnrollPage() {
       <h1>Enroll</h1>
       <h3>Select Course</h3>
       {COURSES.map((c) => (
-        <label key={c.id} style={{ display: 'block', padding: 12, border: courseId === c.id ? '2px solid #0070f3' : '1px solid #ddd', borderRadius: 8, marginBottom: 8, cursor: 'pointer' }}>
+        <label key={c.id} style={{ display: 'block', padding: 12, border: courseId === c.id ? '2px solid #7c3aed' : '1px solid #ddd', borderRadius: 8, marginBottom: 8, cursor: 'pointer' }}>
           <input type="radio" checked={courseId === c.id} onChange={() => setCourseId(c.id)} style={{ marginRight: 8 }} />
           {c.name} — <strong>${c.price}</strong>
         </label>
@@ -54,7 +54,7 @@ export default function EnrollPage() {
         <input style={inputStyle} placeholder="Full name *" value={name} onChange={(e) => setName(e.target.value)} required />
         <input style={inputStyle} placeholder="Email *" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         {error && <div style={{ color: 'red', marginBottom: 12 }}>{error}</div>}
-        <button type="submit" disabled={loading} style={{ width: '100%', padding: 16, fontSize: 18, background: loading ? '#ccc' : '#0070f3', color: 'white', border: 'none', borderRadius: 8, cursor: loading ? 'default' : 'pointer' }}>
+        <button type="submit" disabled={loading} style={{ width: '100%', padding: 16, fontSize: 18, background: loading ? '#ccc' : '#7c3aed', color: 'white', border: 'none', borderRadius: 8, cursor: loading ? 'default' : 'pointer' }}>
           {loading ? 'Processing...' : `Enroll $${course?.price}`}
         </button>
       </form>
