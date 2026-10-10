@@ -23,7 +23,44 @@ const ADDONS: Record<string, { name: string; price: number }> = {
   pet: { name: 'Pet Hair Treatment', price: 3000 },
 };
 
+// In-memory rate limiter: 10 requests per IP per minute
+// Free, zero infrastructure. Resets on deploy (acceptable for MVP).
+const rateLimitStore = globalThis as unknown as {
+  __turnoverpro_ratelimit?: Map<string, number[]>;
+};
+
+function isRateLimited(ip: string): boolean {
+  if (!rateLimitStore.__turnoverpro_ratelimit) {
+    rateLimitStore.__turnoverpro_ratelimit = new Map();
+  }
+  const now = Date.now();
+  const window = 60 * 1000; // 1 minute
+  const maxRequests = 10;
+
+  const timestamps = rateLimitStore.__turnoverpro_ratelimit.get(ip) || [];
+  const recent = timestamps.filter((t) => now - t < window);
+
+  if (recent.length >= maxRequests) {
+    return true;
+  }
+
+  recent.push(now);
+  rateLimitStore.__turnoverpro_ratelimit.set(ip, recent);
+  return false;
+}
+
 export async function POST(req: NextRequest) {
+  // Rate limit by IP
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || req.headers.get('x-real-ip')
+    || 'unknown';
+  if (isRateLimited(ip)) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a minute and try again.' },
+      { status: 429 }
+    );
+  }
+
   try {
     const body = await req.json();
     const { packageId, addons = [], customer } = body;
