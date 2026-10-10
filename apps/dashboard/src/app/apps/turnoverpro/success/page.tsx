@@ -1,0 +1,57 @@
+/**
+ * TurnoverPro Booking Success Page
+ * Shown after Stripe Checkout completes.
+ */
+
+import Link from 'next/link';
+
+export const metadata = {
+  title: 'Booking Confirmed — TurnoverPro',
+};
+
+export default function SuccessPage({
+  searchParams,
+}: {
+  searchParams: { session_id?: string };
+}) {
+  return (
+    <div style={{ fontFamily: 'system-ui, sans-serif', maxWidth: 600, margin: '0 auto', padding: '80px 24px', textAlign: 'center', color: '#1a1a1a' }}>
+      <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#f0fdfa', border: '2px solid #14b8a6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontSize: 40 }}>
+        ✓
+      </div>
+      <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 12 }}>
+        Booking Confirmed!
+      </h1>
+      <p style={{ color: '#666', fontSize: 17, marginBottom: 8 }}>
+        Thank you! Your move-out cleaning is booked.
+      </p>
+      <p style={{ color: '#666', fontSize: 15, marginBottom: 32 }}>
+        We've sent a confirmation email with all the details.
+        Our team will contact you 24 hours before your cleaning date.
+      </p>
+
+      {searchParams.session_id && (
+        <p style={{ fontSize: 13, color: '#999', marginBottom: 32 }}>
+          Reference: {searchParams.session_id.substring(0, 20)}...
+        </p>
+      )}
+
+      <div style={{ background: '#f0fdfa', border: '1px solid #99f6e4', borderRadius: 10, padding: 20, textAlign: 'left', marginBottom: 32 }}>
+        <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 12px' }}>What happens next?</h3>
+        <ol style={{ margin: 0, paddingLeft: 20, color: '#444' }}>
+          <li style={{ marginBottom: 8 }}>You'll receive a confirmation email within 5 minutes</li>
+          <li style={{ marginBottom: 8 }}>Our team confirms your date 48 hours before</li>
+          <li style={{ marginBottom: 8 }}>We arrive with all supplies — you don't need to be there</li>
+          <li>Walk through with your landlord and get your deposit back</li>
+        </ol>
+      </div>
+
+      <Link
+        href="/apps/turnoverpro"
+        style={{ display: 'inline-block', color: '#0f766e', fontWeight: 600, textDecoration: 'none' }}
+      >
+        ← Back to TurnoverPro
+      </Link>
+    </div>
+  );
+}
