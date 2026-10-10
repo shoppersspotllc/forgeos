@@ -96,6 +96,31 @@ export async function POST(req: NextRequest) {
       store.__fitroutine_subs.push(sub);
     }
 
+    if (event.type === 'invoice.payment_failed') {
+      const invoice = event.data.object;
+      console.error(`FitRoutine payment failed for subscription: ${invoice.subscription}`);
+      // Mark subscription as past_due in store
+      const sub = store.__fitroutine_subs.find(
+        (s: Record<string, unknown>) => s.stripeSubscriptionId === invoice.subscription
+      ) as Record<string, unknown> | undefined;
+      if (sub) {
+        sub.status = 'past_due';
+        sub.lastPaymentFailedAt = new Date().toISOString();
+      }
+    }
+
+    if (event.type === 'customer.subscription.updated') {
+      const subscription = event.data.object;
+      const sub = store.__fitroutine_subs.find(
+        (s: Record<string, unknown>) => s.stripeSubscriptionId === subscription.id
+      ) as Record<string, unknown> | undefined;
+      if (sub) {
+        sub.status = subscription.status;
+        sub.updatedAt = new Date().toISOString();
+        console.log(`FitRoutine subscription updated: ${subscription.id} → ${subscription.status}`);
+      }
+    }
+
     if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object;
       const subId = subscription.id;
