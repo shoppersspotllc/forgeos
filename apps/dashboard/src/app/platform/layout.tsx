@@ -16,8 +16,10 @@ export const metadata = {
 
 /** Workspace shell for the Young Money AI Business Growth Platform (scaffold). */
 export default function PlatformLayout({ children }: { children: ReactNode }) {
+  // B2 fix (CSS only): clip any horizontal overflow from decorative content and
+  // let the header/nav wrap on narrow viewports instead of overflowing 390px.
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', overflowX: 'clip' }}>
       <div
         style={{
           background: 'rgba(245,158,11,0.12)',
@@ -33,8 +35,10 @@ export default function PlatformLayout({ children }: { children: ReactNode }) {
       <header
         style={{
           display: 'flex',
+          flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'space-between',
+          gap: 12,
           padding: '16px 28px',
           borderBottom: '1px solid var(--border)',
         }}
@@ -45,7 +49,7 @@ export default function PlatformLayout({ children }: { children: ReactNode }) {
             AI business operations for home-service shops · scaffold v0.1
           </div>
         </div>
-        <nav style={{ display: 'flex', gap: 6 }}>
+        <nav style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxWidth: '100%' }}>
           {NAV.map((n) => (
             <Link
               key={n.href}

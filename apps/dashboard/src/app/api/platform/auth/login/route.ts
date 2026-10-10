@@ -52,6 +52,15 @@ export async function POST(req: NextRequest) {
   const token = await issuePreviewToken(tenant);
   const expiresAt = new Date(Date.now() + 12 * 3600 * 1000).toISOString();
   store.logActivity(tenant, 'system', 'preview_login', tenant, 'Preview session issued (TEST).');
+  // B1 fix: base the Secure attribute on the actual request scheme, not
+  // NODE_ENV alone. Browsers drop Secure cookies over plain HTTP, which broke
+  // UI login on non-HTTPS previews (API returned 200 but the cookie was never
+  // stored, so the browser bounced back to /platform/login). HTTPS deployments
+  // — direct or behind a proxy sending x-forwarded-proto — keep Secure.
+  const forwardedProto = req.headers.get('x-forwarded-proto');
+  const isSecureRequest = forwardedProto
+    ? forwardedProto.split(',')[0].trim().toLowerCase() === 'https'
+    : req.nextUrl.protocol === 'https:';
   const res = NextResponse.json({
     demo: DEMO,
     dataMode: 'TEST',
@@ -62,7 +71,7 @@ export async function POST(req: NextRequest) {
     sameSite: 'lax',
     path: '/',
     maxAge: 12 * 3600,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isSecureRequest,
   });
   return res;
 }
