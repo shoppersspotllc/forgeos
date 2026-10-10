@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     }
     globalStore.__pulsepilot_events.add(eventId);
 
-    const store = globalThis as unknown as { __pulsepilot_subs?: Array<object> };
+    const store = globalThis as unknown as { __pulsepilot_subs?: Array<Record<string, unknown>> };
     if (!store.__pulsepilot_subs) {
       store.__pulsepilot_subs = [];
     }

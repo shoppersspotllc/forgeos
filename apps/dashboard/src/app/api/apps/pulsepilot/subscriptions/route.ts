@@ -6,7 +6,7 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const store = globalThis as unknown as { __pulsepilot_subs?: Array<object> };
+  const store = globalThis as unknown as { __pulsepilot_subs?: Array<Record<string, unknown>> };
   const subs = store.__pulsepilot_subs || [];
 
   const safe = subs.map((s: Record<string, unknown>) => ({
