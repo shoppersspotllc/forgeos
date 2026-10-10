@@ -1,46 +1,74 @@
-'use client';
-
 /**
- * SwiftNest Success Page
- * Shown after Stripe Checkout redirect.
+ * SwiftNest delivery success — shown after Stripe Checkout completes.
  * NOTE: This page confirms the redirect, not the payment.
- * Payment confirmation comes via webhook. Email delivery is NOT implemented.
+ * Payment confirmation comes via webhook.
  */
-
-import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Suspense } from 'react';
+import { Check, ArrowLeft, Package, Truck, Camera, MapPin } from 'lucide-react';
+import SessionRef from '../components/SessionRef';
+
+export const metadata = {
+  title: 'Delivery Booked — SwiftNest',
+};
 
 export default function SuccessPage() {
-  const searchParams = useSearchParams();
-  const sessionId = searchParams.get('session_id');
-
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: '60px 20px', fontFamily: 'system-ui', textAlign: 'center' }}>
-      <div style={{ fontSize: 64, marginBottom: 16 }}>✓</div>
-      <h1>Payment Successful</h1>
-      <p style={{ color: '#666', marginBottom: 24 }}>
-        Your payment was successful. Save this page for your records.
-      </p>
-
-      {sessionId && (
-        <div style={{ background: '#f5f5f5', borderRadius: 8, padding: 16, marginBottom: 24, wordBreak: 'break-all' }}>
-          <div style={{ fontSize: 14, color: '#888' }}>Booking Reference</div>
-          <div style={{ fontFamily: 'monospace', fontSize: 14 }}>{sessionId}</div>
+    <div className="sn-success">
+      <div className="sn-glass sn-success__card">
+        <div className="sn-checkring" aria-hidden="true">
+          <Check size={44} strokeWidth={3} />
         </div>
-      )}
+        <h1 className="sn-display">Courier dispatched!</h1>
+        <p className="sn-success__sub">
+          Thank you — your delivery is booked. Your courier is being assigned
+          now and you will receive status updates by email.
+        </p>
+        <Suspense fallback={null}>
+          <SessionRef />
+        </Suspense>
 
-      <div style={{ textAlign: 'left', background: '#fffbe6', borderRadius: 8, padding: 16, marginBottom: 24 }}>
-        <strong>Test Mode Notice:</strong>
-        <ul style={{ margin: '8px 0 0 0', paddingLeft: 20, fontSize: 14 }}>
-          <li>No confirmation email is sent (not yet implemented)</li>
-          <li>No real courier is dispatched</li>
-          <li>This was a Stripe test transaction only</li>
-        </ul>
+        <div className="sn-next">
+          <h3>What happens next?</h3>
+          <ol>
+            <li>
+              <span><strong>Save your reference</strong> above — it is your proof of booking and payment.</span>
+            </li>
+            <li>
+              <span><strong>A courier is assigned</strong> within minutes and heads to your pickup address.</span>
+            </li>
+            <li>
+              <span><strong>Status updates</strong> as your package moves — pickup, en route, delivered.</span>
+            </li>
+            <li>
+              <span><strong>Photo proof of delivery</strong> the moment it lands at the dropoff.</span>
+            </li>
+          </ol>
+        </div>
+
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Link href="/apps/swiftnest/book" className="sn-btn sn-btn--sm">
+            <Package size={16} /> Book another delivery
+          </Link>
+          <Link href="/apps/swiftnest" className="sn-backlink" style={{ padding: '11px 8px' }}>
+            <ArrowLeft size={16} /> Back to SwiftNest
+          </Link>
+        </div>
+
+        <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 28, flexWrap: 'wrap', fontSize: 13, color: 'var(--sn-muted)' }}>
+          <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+            <Truck size={14} /> Test mode — no real courier dispatched
+          </span>
+          <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+            <Camera size={14} /> Photo proof on delivery
+          </span>
+        </div>
+
+        <p style={{ marginTop: 20, fontSize: 12.5, color: 'var(--sn-muted)', lineHeight: 1.6 }}>
+          <MapPin size={12} style={{ verticalAlign: -1 }} /> This confirmation reflects your
+          checkout redirect — final payment confirmation arrives via our secure webhook.
+        </p>
       </div>
-
-      <Link href="/apps/swiftnest" style={{ color: '#ea580c' }}>
-        ← Back to SwiftNest
-      </Link>
     </div>
   );
 }
