@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { store, DATA_MODE, DEMO } from '@/lib/platform/store';
+import { authorizeRequest } from '@/lib/platform/auth';
 import { draftFollowUp } from '@/lib/platform/ai';
 
 const envelope = (data: unknown) => ({ demo: DEMO, dataMode: DATA_MODE, data });
 
 /**
- * POST /api/platform/leads/[id]/draft — create a follow-up draft for the approval queue.
- * Drafts are TEST stubs (see lib/platform/ai.ts). Nothing is sent here; the draft
- * enters the approval queue and only a later explicit approval records a SIMULATED send.
+ * POST /api/platform/leads/[id]/draft — create a follow-up draft for this
+ * tenant's approval queue. Drafts are TEST stubs (see lib/platform/ai.ts).
+ * Nothing is sent here; the draft enters the approval queue and only a
+ * later explicit approval records a SIMULATED send.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await authorizeRequest(req);
+  if (!auth.ok) return NextResponse.json(envelope({ error: auth.error }), { status: auth.status });
   const { id } = await params;
-  const lead = store.leads.find((l) => l.id === id);
+  const lead = store.findLead(auth.tenantId, id);
   if (!lead) {
     return NextResponse.json(envelope({ error: 'Lead not found' }), { status: 404 });
   }
@@ -28,6 +32,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const result = await draftFollowUp(lead, channel);
   const item = {
     id: store.nextId('appr'),
+    tenantId: auth.tenantId,
     leadId: lead.id,
     channel: result.channel,
     draftText: result.draft,
@@ -42,12 +47,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   };
   store.approvals.push(item);
   store.logActivity(
+    auth.tenantId,
     'growth-dot',
     'draft_created',
     item.id,
     `TEST ${channel} draft for ${lead.customerName} queued for approval (aiGenerated=${result.aiGenerated})`
   );
   store.logAudit(
+    auth.tenantId,
     'draft_created',
     item.id,
     'ok',

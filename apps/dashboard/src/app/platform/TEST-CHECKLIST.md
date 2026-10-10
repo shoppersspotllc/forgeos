@@ -1,23 +1,16 @@
-# Young Money Platform — TEST Checklist (scaffold v0.1)
+# Young Money Platform — TEST Checklist (scaffold v0.1 + preview auth)
 
 Scope: isolated branch `apps/young-money-platform`. TEST/demo data only. No production.
 
 ## Automated (run locally)
 
-- [ ] `tsc --noEmit` on the new `platform` routes — target: 0 errors
-- [ ] API smoke tests (node script against `next dev` or route handlers):
-  - [ ] `GET /api/platform/leads` → 200, `demo:true`, 6 seeded leads, 2 flagged neglected
-  - [ ] `POST /api/platform/leads` → 201 with valid body; 400 with missing customerName / bad trade / bad amount
-  - [ ] `POST /api/platform/leads/[id]/draft` → 201, approval queued, `aiGenerated:false`, nothing sent
-  - [ ] `POST /api/platform/leads/[id]/draft` on won lead → 409
-  - [ ] `GET /api/platform/approvals` → pending list
-  - [ ] `POST /api/platform/approvals` approve → approved + SIMULATED send logged; lead status → followed_up
-  - [ ] `POST /api/platform/approvals` approve twice → 409 (no double-send)
-  - [ ] `POST /api/platform/approvals` reject → rejected with note
-  - [ ] `GET /api/platform/briefing` → 4 sections, each with source/freshness/period + missing-data disclosure
-  - [ ] `GET /api/platform/health` → checks with evidence; `aiMode=test-stub`
-  - [ ] `GET /api/platform/activity` → activity + audit records appended by the above
-  - [ ] `PATCH /api/platform/leads/[id]` → outcome won/lost/open; 400 on invalid outcome; 404 on unknown id
+- [x] `tsc --noEmit` (strict) — 0 errors (2026-10-10)
+- [x] `next build` — passes cleanly (2026-10-10; 2 pre-existing Turbopack warnings in `src/lib/forgeos-ai/service-keys.mjs`, unrelated to platform code)
+- [x] API smoke tests — 63/63 pass (2026-10-10), covering:
+  - All original scaffold checks (leads CRUD validation, draft lifecycle, approval queue incl. 409 double-decide, briefing labels, health evidence, activity/audit shape, outcome PATCH)
+  - Preview auth: login wrong/empty/missing code → 401; valid → 200 + httpOnly cookie + `private-preview` label; bad tenant id → 400; missing/garbage/tampered/expired token → 401; cookie auth → 200
+  - Cross-tenant isolation: tenant-b cannot list, read, PATCH, draft, or approve tenant-a's records (404, no data leaked); briefing/activity scoped per tenant; demo seeds invisible to other tenants
+  - Simulated-send safety: send-path source scan (comments stripped) finds no network primitives; approve flow works with `fetch` replaced by a throwing stub; outbox gains exactly 1 local `simulated:true` record; outbox tenant-scoped
 
 ## Manual (browser, post-quota preview)
 
@@ -33,5 +26,5 @@ Scope: isolated branch `apps/young-money-platform`. TEST/demo data only. No prod
 - Real AI drafting (disabled by design — zero-spend; requires platform credential + approval)
 - Real message delivery (sends are simulated; no email/SMS integration)
 - Persistence (in-memory store is volatile by design)
-- Auth/permissions (no customer identity system yet — greenfield per assessment)
+- Production identity (preview auth only: shared access code, no MFA, no user directory, no login rate limiting — labeled as such in code)
 - Full dashboard `next build` (VM copy stale; build runs on preview post-quota)

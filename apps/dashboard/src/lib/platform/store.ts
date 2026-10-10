@@ -13,6 +13,8 @@ export type LeadOutcome = 'open' | 'won' | 'lost';
 
 export interface Lead {
   id: string;
+  /** Owning tenant. All reads/writes are scoped by the verified session's tenantId. */
+  tenantId: string;
   /** DEMO customer name — fictional. */
   customerName: string;
   trade: 'HVAC' | 'Plumbing' | 'Electrical';
@@ -30,6 +32,8 @@ export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export interface ApprovalItem {
   id: string;
+  /** Owning tenant. Scoped by the verified session's tenantId. */
+  tenantId: string;
   leadId: string;
   channel: 'sms' | 'email';
   draftText: string;
@@ -46,6 +50,8 @@ export interface ApprovalItem {
 
 export interface ActivityRecord {
   ts: string;
+  /** Owning tenant. Scoped by the verified session's tenantId. */
+  tenantId: string;
   actor: 'growth-dot' | 'bi-dot' | 'reliability-dot' | 'owner' | 'system';
   action: string;
   target: string;
@@ -56,6 +62,8 @@ export interface ActivityRecord {
 /** AppOps-compatible audit record shape (see ~/workspace/appops/logs/audit.jsonl). */
 export interface AuditRecord {
   ts: string;
+  /** Owning tenant. Scoped by the verified session's tenantId. */
+  tenantId: string;
   actor: string;
   app: 'young-money-platform';
   action: string;
@@ -70,9 +78,13 @@ const now = Date.now();
 const daysAgo = (n: number) => new Date(now - n * 24 * 3600 * 1000).toISOString();
 
 function seedLeads(): Lead[] {
+  // Seeded DEMO leads belong to the 'demo' tenant only. Other tenants
+  // start empty and can never see these records (all access is scoped).
+  const T = 'demo';
   return [
     {
       id: 'lead-demo-001',
+      tenantId: T,
       customerName: 'DEMO — Dana Homeowner',
       trade: 'HVAC',
       phone: '555-0101',
@@ -85,6 +97,7 @@ function seedLeads(): Lead[] {
     },
     {
       id: 'lead-demo-002',
+      tenantId: T,
       customerName: 'DEMO — Pat Property',
       trade: 'Plumbing',
       phone: '555-0102',
@@ -97,6 +110,7 @@ function seedLeads(): Lead[] {
     },
     {
       id: 'lead-demo-003',
+      tenantId: T,
       customerName: 'DEMO — Sam Shopowner',
       trade: 'Electrical',
       phone: '555-0103',
@@ -109,6 +123,7 @@ function seedLeads(): Lead[] {
     },
     {
       id: 'lead-demo-004',
+      tenantId: T,
       customerName: 'DEMO — Robin Renter',
       trade: 'HVAC',
       phone: '555-0104',
@@ -121,6 +136,7 @@ function seedLeads(): Lead[] {
     },
     {
       id: 'lead-demo-005',
+      tenantId: T,
       customerName: 'DEMO — Terry Tenant',
       trade: 'Plumbing',
       phone: '555-0105',
@@ -133,6 +149,7 @@ function seedLeads(): Lead[] {
     },
     {
       id: 'lead-demo-006',
+      tenantId: T,
       customerName: 'DEMO — Alex Apartment',
       trade: 'Electrical',
       phone: '555-0106',
@@ -158,13 +175,43 @@ class PlatformStore {
     return `${prefix}-demo-${String(this.seq).padStart(3, '0')}-${Date.now().toString(36)}`;
   }
 
-  logActivity(actor: ActivityRecord['actor'], action: string, target: string, detail: string) {
-    this.activity.push({ ts: new Date().toISOString(), actor, action, target, detail, demo: true });
+  // ---- Tenant-scoped access. Routes must use these, never the raw arrays. ----
+  // A record is visible/mutable only when its tenantId matches the verified
+  // session's tenantId. Cross-tenant lookups return undefined (routes map
+  // that to 404 so existence is not leaked).
+
+  leadsOf(tenantId: string): Lead[] {
+    return this.leads.filter((l) => l.tenantId === tenantId);
   }
 
-  logAudit(action: string, target: string, result: string, evidence: string, approval: string) {
+  findLead(tenantId: string, id: string): Lead | undefined {
+    return this.leads.find((l) => l.tenantId === tenantId && l.id === id);
+  }
+
+  approvalsOf(tenantId: string): ApprovalItem[] {
+    return this.approvals.filter((a) => a.tenantId === tenantId);
+  }
+
+  findApproval(tenantId: string, id: string): ApprovalItem | undefined {
+    return this.approvals.find((a) => a.tenantId === tenantId && a.id === id);
+  }
+
+  activityOf(tenantId: string): ActivityRecord[] {
+    return this.activity.filter((a) => a.tenantId === tenantId);
+  }
+
+  auditOf(tenantId: string): AuditRecord[] {
+    return this.audit.filter((a) => a.tenantId === tenantId);
+  }
+
+  logActivity(tenantId: string, actor: ActivityRecord['actor'], action: string, target: string, detail: string) {
+    this.activity.push({ ts: new Date().toISOString(), tenantId, actor, action, target, detail, demo: true });
+  }
+
+  logAudit(tenantId: string, action: string, target: string, result: string, evidence: string, approval: string) {
     this.audit.push({
       ts: new Date().toISOString(),
+      tenantId,
       actor: 'muse',
       app: 'young-money-platform',
       action,
