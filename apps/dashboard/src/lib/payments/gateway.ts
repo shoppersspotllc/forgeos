@@ -113,3 +113,70 @@ export async function createCheckoutSession(
 export function webhookSecretEnvVar(appId: string): string {
   return registrationFor(appId).webhookSecretEnvVar;
 }
+
+/**
+ * Webhook signature verification (Stripe scheme).
+ *
+ * Verifies the `Stripe-Signature` header (`t=<timestamp>,v1=<hex hmac>`) using
+ * the app's registered webhook signing secret from env and the RAW request
+ * body. Enforces a timestamp tolerance to blunt replay attacks. Throws on
+ * any failure (fail closed). Returns the verified event id + type.
+ *
+ * Caller responsibilities (not done here): read the raw body BEFORE parsing,
+ * and track processed event ids to handle duplicate deliveries (idempotency).
+ */
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
+export interface VerifiedWebhookEvent {
+  eventId: string;
+  eventType: string;
+}
+
+export function verifyWebhookSignature(opts: {
+  appId: string;
+  rawBody: string;
+  signatureHeader: string | null | undefined;
+  toleranceSeconds?: number;
+}): VerifiedWebhookEvent {
+  const secret = process.env[webhookSecretEnvVar(opts.appId)];
+  if (!secret) {
+    throw new Error('[payments] Webhook signing secret is not configured.');
+  }
+  if (!opts.signatureHeader) {
+    throw new Error('[payments] Missing Stripe-Signature header.');
+  }
+  const pairs = opts.signatureHeader.split(',');
+  const get = (k: string): string | undefined => {
+    const p = pairs.find((x) => x.startsWith(k + '='));
+    return p ? p.slice(k.length + 1) : undefined;
+  };
+  const t = get('t');
+  const v1s = pairs.filter((p) => p.startsWith('v1=')).map((p) => p.slice(3));
+  if (!t || v1s.length === 0) {
+    throw new Error('[payments] Malformed Stripe-Signature header.');
+  }
+  const ageSec = Math.abs(Date.now() / 1000 - Number(t));
+  const tolerance = opts.toleranceSeconds ?? 300;
+  if (!Number.isFinite(ageSec) || ageSec > tolerance) {
+    throw new Error('[payments] Webhook timestamp outside tolerance (possible replay).');
+  }
+  const expectedHex = createHmac('sha256', secret).update(`${t}.${opts.rawBody}`, 'utf8').digest('hex');
+  const expected = Buffer.from(expectedHex, 'utf8');
+  const matched = v1s.some((v1) => {
+    const actual = Buffer.from(v1, 'utf8');
+    return actual.length === expected.length && timingSafeEqual(actual, expected);
+  });
+  if (!matched) {
+    throw new Error('[payments] Webhook signature mismatch.');
+  }
+  let event: { id?: unknown; type?: unknown };
+  try {
+    event = JSON.parse(opts.rawBody);
+  } catch {
+    throw new Error('[payments] Webhook body is not valid JSON.');
+  }
+  if (typeof event.id !== 'string' || typeof event.type !== 'string') {
+    throw new Error('[payments] Webhook payload missing id/type.');
+  }
+  return { eventId: event.id, eventType: event.type };
+}
