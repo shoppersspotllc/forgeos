@@ -1,12 +1,12 @@
 /**
- * Turnvia Booking Success Page
+ * FreshTurn Booking Success Page
  * Shown after Stripe Checkout completes.
  */
 
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Booking Confirmed — Turnvia',
+  title: 'Booking Confirmed — FreshTurn',
 };
 
 export default function SuccessPage({
@@ -16,7 +16,7 @@ export default function SuccessPage({
 }) {
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', maxWidth: 600, margin: '0 auto', padding: '80px 24px', textAlign: 'center', color: '#1a1a1a' }}>
-      <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#f0fdfa', border: '2px solid #14b8a6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontSize: 40 }}>
+      <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#f0fdf4', border: '2px solid #22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontSize: 40 }}>
         ✓
       </div>
       <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 12 }}>
@@ -36,7 +36,7 @@ export default function SuccessPage({
         </p>
       )}
 
-      <div style={{ background: '#f0fdfa', border: '1px solid #99f6e4', borderRadius: 10, padding: 20, textAlign: 'left', marginBottom: 32 }}>
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: 20, textAlign: 'left', marginBottom: 32 }}>
         <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 12px' }}>What happens next?</h3>
         <ol style={{ margin: 0, paddingLeft: 20, color: '#444' }}>
           <li style={{ marginBottom: 8 }}>Your booking reference is shown above — save it for your records</li>
@@ -47,10 +47,10 @@ export default function SuccessPage({
       </div>
 
       <Link
-        href="/apps/turnvia"
-        style={{ display: 'inline-block', color: '#0f766e', fontWeight: 600, textDecoration: 'none' }}
+        href="/apps/freshturn"
+        style={{ display: 'inline-block', color: '#15803d', fontWeight: 600, textDecoration: 'none' }}
       >
-        ← Back to Turnvia
+        ← Back to FreshTurn
       </Link>
     </div>
   );

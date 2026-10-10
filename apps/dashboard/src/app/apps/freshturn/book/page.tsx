@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Turnvia Booking Flow
+ * FreshTurn Booking Flow
  * Step 1: Select package → Step 2: Add-ons → Step 3: Details & date → Step 4: Stripe Checkout
  */
 
@@ -63,7 +63,7 @@ function BookingFlow() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/apps/turnvia/checkout', {
+      const res = await fetch('/api/apps/freshturn/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -102,16 +102,16 @@ function BookingFlow() {
             key={p.id}
             style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              border: pkg === p.id ? '2px solid #14b8a6' : '1px solid #e5e5e5',
+              border: pkg === p.id ? '2px solid #22c55e' : '1px solid #e5e5e5',
               borderRadius: 10, padding: '16px 20px', cursor: 'pointer',
-              background: pkg === p.id ? '#f0fdfa' : '#fff',
+              background: pkg === p.id ? '#f0fdf4' : '#fff',
             }}
           >
             <span>
               <input type="radio" name="pkg" checked={pkg === p.id} onChange={() => setPkg(p.id)} style={{ marginRight: 12 }} />
               <strong>{p.name}</strong>
             </span>
-            <strong style={{ color: '#0f766e', fontSize: 20 }}>${p.price}</strong>
+            <strong style={{ color: '#15803d', fontSize: 20 }}>${p.price}</strong>
           </label>
         ))}
       </div>
@@ -125,14 +125,14 @@ function BookingFlow() {
             style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               border: '1px solid #e5e5e5', borderRadius: 8, padding: '12px 16px', cursor: 'pointer',
-              background: selectedAddons.includes(a.id) ? '#f0fdfa' : '#fff',
+              background: selectedAddons.includes(a.id) ? '#f0fdf4' : '#fff',
             }}
           >
             <span>
               <input type="checkbox" checked={selectedAddons.includes(a.id)} onChange={() => toggleAddon(a.id)} style={{ marginRight: 12 }} />
               {a.name}
             </span>
-            <span style={{ color: '#0f766e', fontWeight: 600 }}>+${a.price}</span>
+            <span style={{ color: '#15803d', fontWeight: 600 }}>+${a.price}</span>
           </label>
         ))}
       </div>
@@ -152,7 +152,7 @@ function BookingFlow() {
       />
 
       {/* Total */}
-      <div style={{ background: '#f0fdfa', border: '1px solid #99f6e4', borderRadius: 10, padding: 20, margin: '24px 0' }}>
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: 20, margin: '24px 0' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
           <span>{pkgData.name}</span><span>${pkgData.price}</span>
         </div>
@@ -161,8 +161,8 @@ function BookingFlow() {
             <span>{a.name}</span><span>+${a.price}</span>
           </div>
         ))}
-        <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #99f6e4', paddingTop: 12, fontSize: 20, fontWeight: 800 }}>
-          <span>Total</span><span style={{ color: '#0f766e' }}>${total}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #bbf7d0', paddingTop: 12, fontSize: 20, fontWeight: 800 }}>
+          <span>Total</span><span style={{ color: '#15803d' }}>${total}</span>
         </div>
       </div>
 
@@ -176,7 +176,7 @@ function BookingFlow() {
         onClick={handleCheckout}
         disabled={loading}
         style={{
-          width: '100%', background: loading ? '#99f6e4' : '#0f766e', color: '#fff',
+          width: '100%', background: loading ? '#bbf7d0' : '#15803d', color: '#fff',
           padding: '16px', borderRadius: 10, fontWeight: 700, fontSize: 18,
           border: 'none', cursor: loading ? 'wait' : 'pointer',
         }}

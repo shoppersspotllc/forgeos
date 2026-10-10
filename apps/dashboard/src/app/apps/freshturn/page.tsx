@@ -1,15 +1,15 @@
 /**
- * Turnvia — Move-out cleaning & rental turnover
+ * FreshTurn — Move-out cleaning & rental turnover
  * Young Money Five-App Revenue Initiative — App #1
  *
  * Independent app with its own identity, booking flow, and Stripe integration.
- * Route: /apps/turnvia
+ * Route: /apps/freshturn
  */
 
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Turnvia — Move-Out Cleaning & Rental Turnover',
+  title: 'FreshTurn — Move-Out Cleaning & Rental Turnover',
   description:
     'Professional move-out cleaning for renters, landlords, and property managers. Book online, upfront pricing, satisfaction guaranteed.',
 };
@@ -65,13 +65,13 @@ const addons = [
   { id: 'pet', name: 'Pet Hair Treatment', price: 30 },
 ];
 
-export default function TurnviaHome() {
+export default function FreshTurnHome() {
   return (
     <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1a1a1a', lineHeight: 1.6 }}>
       {/* Hero */}
-      <div style={{ background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)', color: '#fff', padding: '80px 24px', textAlign: 'center' }}>
+      <div style={{ background: 'linear-gradient(135deg, #15803d 0%, #22c55e 100%)', color: '#fff', padding: '80px 24px', textAlign: 'center' }}>
         <p style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 3, opacity: 0.9, margin: '0 0 16px' }}>
-          Young Money · Turnvia
+          Young Money · FreshTurn
         </p>
         <h1 style={{ fontSize: 44, fontWeight: 800, margin: '0 0 16px', lineHeight: 1.2 }}>
           Move-Out Cleaning,<br />Done Right.
@@ -81,8 +81,8 @@ export default function TurnviaHome() {
           Book in 2 minutes. Get your deposit back.
         </p>
         <Link
-          href="/apps/turnvia/book"
-          style={{ display: 'inline-block', background: '#fff', color: '#0f766e', padding: '16px 40px', borderRadius: 10, fontWeight: 700, fontSize: 18, textDecoration: 'none' }}
+          href="/apps/freshturn/book"
+          style={{ display: 'inline-block', background: '#fff', color: '#15803d', padding: '16px 40px', borderRadius: 10, fontWeight: 700, fontSize: 18, textDecoration: 'none' }}
         >
           Book Your Cleaning →
         </Link>
@@ -104,7 +104,7 @@ export default function TurnviaHome() {
             <div
               key={pkg.id}
               style={{
-                border: pkg.popular ? '2px solid #14b8a6' : '1px solid #e5e5e5',
+                border: pkg.popular ? '2px solid #22c55e' : '1px solid #e5e5e5',
                 borderRadius: 12,
                 padding: 28,
                 position: 'relative',
@@ -112,12 +112,12 @@ export default function TurnviaHome() {
               }}
             >
               {pkg.popular && (
-                <span style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: '#14b8a6', color: '#fff', padding: '4px 16px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+                <span style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: '#22c55e', color: '#fff', padding: '4px 16px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
                   MOST POPULAR
                 </span>
               )}
               <h3 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>{pkg.name}</h3>
-              <p style={{ fontSize: 36, fontWeight: 800, color: '#0f766e', margin: '8px 0' }}>
+              <p style={{ fontSize: 36, fontWeight: 800, color: '#15803d', margin: '8px 0' }}>
                 ${pkg.price}
               </p>
               <p style={{ color: '#666', fontSize: 15, marginBottom: 16 }}>{pkg.description}</p>
@@ -127,8 +127,8 @@ export default function TurnviaHome() {
                 ))}
               </ul>
               <Link
-                href={`/apps/turnvia/book?package=${pkg.id}`}
-                style={{ display: 'block', textAlign: 'center', background: pkg.popular ? '#14b8a6' : '#f0fdfa', color: pkg.popular ? '#fff' : '#0f766e', padding: '12px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', border: pkg.popular ? 'none' : '1px solid #14b8a6' }}
+                href={`/apps/freshturn/book?package=${pkg.id}`}
+                style={{ display: 'block', textAlign: 'center', background: pkg.popular ? '#22c55e' : '#f0fdf4', color: pkg.popular ? '#fff' : '#15803d', padding: '12px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', border: pkg.popular ? 'none' : '1px solid #22c55e' }}
               >
                 Select {pkg.name}
               </Link>
@@ -142,7 +142,7 @@ export default function TurnviaHome() {
         </h3>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
           {addons.map((a) => (
-            <span key={a.id} style={{ background: '#f0fdfa', border: '1px solid #99f6e4', borderRadius: 20, padding: '8px 20px', fontSize: 15 }}>
+            <span key={a.id} style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 20, padding: '8px 20px', fontSize: 15 }}>
               {a.name} <strong>+${a.price}</strong>
             </span>
           ))}
@@ -162,7 +162,7 @@ export default function TurnviaHome() {
               { n: '3', t: 'Get Your Deposit', d: 'Walk through with your landlord with confidence. 200% satisfaction guarantee.' },
             ].map((s) => (
               <div key={s.n} style={{ textAlign: 'center' }}>
-                <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#14b8a6', color: '#fff', fontSize: 24, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#22c55e', color: '#fff', fontSize: 24, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                   {s.n}
                 </div>
                 <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>{s.t}</h3>
@@ -179,8 +179,8 @@ export default function TurnviaHome() {
           Ready for a Spotless Move-Out?
         </h2>
         <Link
-          href="/apps/turnvia/book"
-          style={{ display: 'inline-block', background: '#0f766e', color: '#fff', padding: '16px 48px', borderRadius: 10, fontWeight: 700, fontSize: 18, textDecoration: 'none' }}
+          href="/apps/freshturn/book"
+          style={{ display: 'inline-block', background: '#15803d', color: '#fff', padding: '16px 48px', borderRadius: 10, fontWeight: 700, fontSize: 18, textDecoration: 'none' }}
         >
           Book Now →
         </Link>
@@ -188,8 +188,8 @@ export default function TurnviaHome() {
 
       {/* Footer */}
       <footer style={{ borderTop: '1px solid #e5e5e5', padding: '32px 24px', textAlign: 'center', color: '#888', fontSize: 14 }}>
-        <p>© 2026 Turnvia · A Young Money Business · Shopper's Spot LLC</p>
-        <p>Questions? Email hello@turnvia.co</p>
+        <p>© 2026 FreshTurn · A Young Money Business · Shopper's Spot LLC</p>
+        <p>Questions? Email hello@freshturn.co</p>
       </footer>
     </div>
   );

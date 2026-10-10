@@ -1,8 +1,8 @@
 /**
- * Turnvia Bookings API (TEST MODE)
+ * FreshTurn Bookings API (TEST MODE)
  * Returns recorded bookings from webhook events.
  *
- * GET /api/apps/turnvia/bookings
+ * GET /api/apps/freshturn/bookings
  *
  * WARNING: In-memory only. Bookings are lost on server restart/deploy.
  * This is acceptable for test-mode MVP validation only.
@@ -12,8 +12,8 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const store = globalThis as unknown as { __turnvia_bookings?: Array<object> };
-  const bookings = store.__turnvia_bookings || [];
+  const store = globalThis as unknown as { __freshturn_bookings?: Array<object> };
+  const bookings = store.__freshturn_bookings || [];
 
   // Strip sensitive fields before returning
   const safe = bookings.map((b: Record<string, unknown>) => ({
