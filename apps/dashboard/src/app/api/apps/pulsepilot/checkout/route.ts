@@ -1,8 +1,8 @@
 /**
- * FitRoutine Checkout API
+ * PulsePilot Checkout API
  * Creates a Stripe Checkout Session in SUBSCRIPTION mode (TEST MODE).
  *
- * POST /api/apps/fitroutine/checkout
+ * POST /api/apps/pulsepilot/checkout
  * Body: { planId, customer: { name, email, phone } }
  * Returns: { url } (Stripe Checkout URL) or { error }
  *
@@ -15,29 +15,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const PLANS: Record<string, { name: string; price: number }> = {
-  basic: { name: 'FitRoutine Basic — Monthly', price: 2900 },
-  pro: { name: 'FitRoutine Pro — Monthly', price: 4900 },
-  elite: { name: 'FitRoutine Elite — Monthly', price: 7900 },
+  basic: { name: 'PulsePilot Basic — Monthly', price: 2900 },
+  pro: { name: 'PulsePilot Pro — Monthly', price: 4900 },
+  elite: { name: 'PulsePilot Elite — Monthly', price: 7900 },
 };
 
 const rateLimitStore = globalThis as unknown as {
-  __fitroutine_ratelimit?: Map<string, number[]>;
+  __pulsepilot_ratelimit?: Map<string, number[]>;
 };
 
 function isRateLimited(ip: string): boolean {
-  if (!rateLimitStore.__fitroutine_ratelimit) {
-    rateLimitStore.__fitroutine_ratelimit = new Map();
+  if (!rateLimitStore.__pulsepilot_ratelimit) {
+    rateLimitStore.__pulsepilot_ratelimit = new Map();
   }
   const now = Date.now();
   const window = 60 * 1000;
   const maxRequests = 10;
 
-  const timestamps = rateLimitStore.__fitroutine_ratelimit.get(ip) || [];
+  const timestamps = rateLimitStore.__pulsepilot_ratelimit.get(ip) || [];
   const recent = timestamps.filter((t) => now - t < window);
   if (recent.length >= maxRequests) return true;
 
   recent.push(now);
-  rateLimitStore.__fitroutine_ratelimit.set(ip, recent);
+  rateLimitStore.__pulsepilot_ratelimit.set(ip, recent);
   return false;
 }
 
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!stripeKey.startsWith('sk_test_')) {
-      console.error('FitRoutine: BLOCKED — non-test Stripe key detected.');
+      console.error('PulsePilot: BLOCKED — non-test Stripe key detected.');
       return NextResponse.json(
         { error: 'Payment system is in test mode only.' },
         { status: 503 }
@@ -90,8 +90,8 @@ export async function POST(req: NextRequest) {
     const params = new URLSearchParams();
     params.append('mode', 'subscription');
     params.append('customer_email', customer.email);
-    params.append('success_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/fitroutine/success?session_id={CHECKOUT_SESSION_ID}`);
-    params.append('cancel_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/fitroutine/subscribe?cancelled=1`);
+    params.append('success_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/pulsepilot/success?session_id={CHECKOUT_SESSION_ID}`);
+    params.append('cancel_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/pulsepilot/subscribe?cancelled=1`);
     params.append('metadata[plan_id]', planId);
     params.append('metadata[customer_name]', customer.name);
     if (customer.phone) params.append('metadata[customer_phone]', customer.phone);

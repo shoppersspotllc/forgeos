@@ -1,13 +1,13 @@
 /**
- * FitRoutine Subscriptions API (TEST MODE)
- * GET /api/apps/fitroutine/subscriptions
+ * PulsePilot Subscriptions API (TEST MODE)
+ * GET /api/apps/pulsepilot/subscriptions
  */
 
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const store = globalThis as unknown as { __fitroutine_subs?: Array<object> };
-  const subs = store.__fitroutine_subs || [];
+  const store = globalThis as unknown as { __pulsepilot_subs?: Array<object> };
+  const subs = store.__pulsepilot_subs || [];
 
   const safe = subs.map((s: Record<string, unknown>) => ({
     app: s.app,

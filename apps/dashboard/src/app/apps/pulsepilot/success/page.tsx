@@ -31,8 +31,8 @@ export default function SuccessPage() {
         </ul>
       </div>
 
-      <Link href="/apps/fitroutine" style={{ color: '#0070f3' }}>
-        ← Back to FitRoutine
+      <Link href="/apps/pulsepilot" style={{ color: '#dc2626' }}>
+        ← Back to PulsePilot
       </Link>
     </div>
   );

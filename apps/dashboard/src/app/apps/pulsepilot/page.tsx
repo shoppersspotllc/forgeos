@@ -1,5 +1,5 @@
 /**
- * FitRoutine Landing Page
+ * PulsePilot Landing Page
  * Fitness memberships.
  */
 
@@ -26,10 +26,10 @@ const PLANS = [
   },
 ];
 
-export default function FitRoutinePage() {
+export default function PulsePilotPage() {
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px', fontFamily: 'system-ui' }}>
-      <h1 style={{ fontSize: 36, marginBottom: 8 }}>FitRoutine</h1>
+      <h1 style={{ fontSize: 36, marginBottom: 8 }}>PulsePilot</h1>
       <p style={{ fontSize: 18, color: '#666', marginBottom: 32 }}>
         Your membership. Your momentum. No contracts, cancel anytime.
       </p>
@@ -54,12 +54,12 @@ export default function FitRoutinePage() {
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: 28, fontWeight: 'bold' }}>${plan.price}<span style={{ fontSize: 14, fontWeight: 'normal' }}>/mo</span></div>
               <Link
-                href={`/apps/fitroutine/subscribe?plan=${plan.id}`}
+                href={`/apps/pulsepilot/subscribe?plan=${plan.id}`}
                 style={{
                   display: 'inline-block',
                   marginTop: 8,
                   padding: '10px 24px',
-                  background: '#0070f3',
+                  background: '#dc2626',
                   color: 'white',
                   borderRadius: 8,
                   textDecoration: 'none',

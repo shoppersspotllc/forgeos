@@ -26,7 +26,7 @@ export default function SubscribePage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/apps/fitroutine/checkout', {
+      const res = await fetch('/api/apps/pulsepilot/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ planId, customer: { name, email, phone } }),
@@ -52,7 +52,7 @@ export default function SubscribePage() {
 
       <h3>Choose Plan</h3>
       {PLANS.map((p) => (
-        <label key={p.id} style={{ display: 'block', padding: 12, border: planId === p.id ? '2px solid #0070f3' : '1px solid #ddd', borderRadius: 8, marginBottom: 8, cursor: 'pointer' }}>
+        <label key={p.id} style={{ display: 'block', padding: 12, border: planId === p.id ? '2px solid #dc2626' : '1px solid #ddd', borderRadius: 8, marginBottom: 8, cursor: 'pointer' }}>
           <input type="radio" name="plan" checked={planId === p.id} onChange={() => setPlanId(p.id)} style={{ marginRight: 8 }} />
           {p.name} — <strong>${p.price}/mo</strong>
           <div style={{ fontSize: 14, color: '#666', marginTop: 4 }}>{p.description}</div>
@@ -76,7 +76,7 @@ export default function SubscribePage() {
           disabled={loading}
           style={{
             width: '100%', padding: 16, fontSize: 18,
-            background: loading ? '#ccc' : '#0070f3', color: 'white',
+            background: loading ? '#ccc' : '#dc2626', color: 'white',
             border: 'none', borderRadius: 8, cursor: loading ? 'default' : 'pointer',
           }}
         >
