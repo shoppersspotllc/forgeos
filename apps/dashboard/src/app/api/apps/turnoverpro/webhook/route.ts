@@ -1,9 +1,18 @@
 /**
- * TurnoverPro Stripe Webhook Handler
+ * TurnoverPro Stripe Webhook Handler (TEST MODE MVP)
  * Receives payment completion events from Stripe.
  *
  * POST /api/apps/turnoverpro/webhook
  * Verifies Stripe signature, records completed bookings.
+ *
+ * DATA INTEGRITY NOTICE:
+ * - Bookings are stored in-memory only. Server restart/deploy LOSES all records.
+ * - Duplicate protection is in-memory only. A restart between Stripe retries
+ *   could allow a duplicate log entry.
+ * - STRIPE DASHBOARD IS THE SOURCE OF TRUTH for all payments.
+ *   Verify bookings at https://dashboard.stripe.com/test/payments
+ * - This is acceptable for test-mode validation only.
+ * - Production requires a persistent database (e.g., Vercel Postgres, Supabase).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
