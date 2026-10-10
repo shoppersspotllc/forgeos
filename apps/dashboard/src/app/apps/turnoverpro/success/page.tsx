@@ -26,7 +26,7 @@ export default function SuccessPage({
         Thank you! Your move-out cleaning is booked.
       </p>
       <p style={{ color: '#666', fontSize: 15, marginBottom: 32 }}>
-        We've sent a confirmation email with all the details.
+        Your payment was successful. Save this page for your records.
         Our team will contact you 24 hours before your cleaning date.
       </p>
 
@@ -39,7 +39,7 @@ export default function SuccessPage({
       <div style={{ background: '#f0fdfa', border: '1px solid #99f6e4', borderRadius: 10, padding: 20, textAlign: 'left', marginBottom: 32 }}>
         <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 12px' }}>What happens next?</h3>
         <ol style={{ margin: 0, paddingLeft: 20, color: '#444' }}>
-          <li style={{ marginBottom: 8 }}>You'll receive a confirmation email within 5 minutes</li>
+          <li style={{ marginBottom: 8 }}>Your booking reference is shown above — save it for your records</li>
           <li style={{ marginBottom: 8 }}>Our team confirms your date 48 hours before</li>
           <li style={{ marginBottom: 8 }}>We arrive with all supplies — you don't need to be there</li>
           <li>Walk through with your landlord and get your deposit back</li>
