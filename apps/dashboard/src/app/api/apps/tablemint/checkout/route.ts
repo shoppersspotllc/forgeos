@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Build line items from server-side prices only
-    const lineItems: Array<{ price_data: object; quantity: number }> = [];
+    const lineItems: Array<{ price_data: { currency: string; product_data: { name: string }; unit_amount: number }; quantity: number }> = [];
     const orderSummary: string[] = [];
 
     for (const { id, qty } of items) {
@@ -128,12 +128,12 @@ export async function POST(req: NextRequest) {
     params.append('metadata[items]', orderSummary.join('; ').substring(0, 500));
     if (customer.address) params.append('metadata[delivery_address]', customer.address.substring(0, 200));
 
-    lineItems.forEach((item: { price_data: { currency: string; product_data: { name: string }; unit_amount: number } }, i: number) => {
-      const pd = item.price_data as { currency: string; product_data: { name: string }; unit_amount: number };
+    lineItems.forEach((item, i) => {
+      const pd = item.price_data;
       params.append(`line_items[${i}][price_data][currency]`, pd.currency);
       params.append(`line_items[${i}][price_data][product_data][name]`, pd.product_data.name);
       params.append(`line_items[${i}][price_data][unit_amount]`, String(pd.unit_amount));
-      params.append(`line_items[${i}][quantity]`, String((item as { quantity: number }).quantity));
+      params.append(`line_items[${i}][quantity]`, String(item.quantity));
     });
 
     const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {

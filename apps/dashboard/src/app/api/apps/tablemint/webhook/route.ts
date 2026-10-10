@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
         testMode: true,
       };
       console.log('TableMint order completed:', JSON.stringify(order));
-      const store = globalThis as unknown as { __tablemint_orders?: Array<object> };
+      const store = globalThis as unknown as { __tablemint_orders?: Array<Record<string, unknown>> };
       if (!store.__tablemint_orders) store.__tablemint_orders = [];
       store.__tablemint_orders.push(order);
     }

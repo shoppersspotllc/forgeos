@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const store = globalThis as unknown as { __tablemint_orders?: Array<object> };
+  const store = globalThis as unknown as { __tablemint_orders?: Array<Record<string, unknown>> };
   const orders = store.__tablemint_orders || [];
   const safe = orders.map((o: Record<string, unknown>) => ({
     app: o.app,
