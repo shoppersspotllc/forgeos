@@ -1,8 +1,8 @@
 /**
- * DirectDish Checkout API
+ * TableMint Checkout API
  * Creates a Stripe Checkout Session in TEST MODE for a food order.
  *
- * POST /api/apps/directdish/checkout
+ * POST /api/apps/tablemint/checkout
  * Body: { items: [{id, qty}], orderType: 'pickup'|'delivery', customer: { name, email, phone, address? } }
  *
  * SECURITY:
@@ -26,21 +26,21 @@ const DELIVERY_FEE = 299;
 const MAX_QTY = 20;
 
 const rateLimitStore = globalThis as unknown as {
-  __directdish_ratelimit?: Map<string, number[]>;
+  __tablemint_ratelimit?: Map<string, number[]>;
 };
 
 function isRateLimited(ip: string): boolean {
-  if (!rateLimitStore.__directdish_ratelimit) {
-    rateLimitStore.__directdish_ratelimit = new Map();
+  if (!rateLimitStore.__tablemint_ratelimit) {
+    rateLimitStore.__tablemint_ratelimit = new Map();
   }
   const now = Date.now();
   const window = 60 * 1000;
   const maxRequests = 10;
-  const timestamps = rateLimitStore.__directdish_ratelimit.get(ip) || [];
+  const timestamps = rateLimitStore.__tablemint_ratelimit.get(ip) || [];
   const recent = timestamps.filter((t) => now - t < window);
   if (recent.length >= maxRequests) return true;
   recent.push(now);
-  rateLimitStore.__directdish_ratelimit.set(ip, recent);
+  rateLimitStore.__tablemint_ratelimit.set(ip, recent);
   return false;
 }
 
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Payment system not configured.' }, { status: 503 });
     }
     if (!stripeKey.startsWith('sk_test_')) {
-      console.error('DirectDish: BLOCKED — non-test Stripe key.');
+      console.error('TableMint: BLOCKED — non-test Stripe key.');
       return NextResponse.json({ error: 'Payment system is in test mode only.' }, { status: 503 });
     }
 
@@ -120,8 +120,8 @@ export async function POST(req: NextRequest) {
     const params = new URLSearchParams();
     params.append('mode', 'payment');
     params.append('customer_email', customer.email);
-    params.append('success_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/directdish/success?session_id={CHECKOUT_SESSION_ID}`);
-    params.append('cancel_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/directdish/order?cancelled=1`);
+    params.append('success_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/tablemint/success?session_id={CHECKOUT_SESSION_ID}`);
+    params.append('cancel_url', `${process.env.NEXT_PUBLIC_APP_URL || 'https://forgeos.shoppersspotllc.com'}/apps/tablemint/order?cancelled=1`);
     params.append('metadata[order_type]', orderType);
     params.append('metadata[customer_name]', customer.name);
     params.append('metadata[customer_phone]', customer.phone);

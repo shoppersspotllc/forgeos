@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * DirectDish Order Page
+ * TableMint Order Page
  * Menu browsing, cart, checkout.
  * Sends only item IDs + quantities — prices are server-side.
  */
@@ -58,7 +58,7 @@ export default function OrderPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/apps/directdish/checkout', {
+      const res = await fetch('/api/apps/tablemint/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -101,7 +101,7 @@ export default function OrderPage() {
                   <span style={{ minWidth: 24, textAlign: 'center' }}>{cart[item.id]}</span>
                 </>
               )}
-              <button onClick={() => addItem(item.id)} style={{ padding: '6px 12px', borderRadius: 6, border: 'none', background: '#0070f3', color: 'white', cursor: 'pointer' }}>+</button>
+              <button onClick={() => addItem(item.id)} style={{ padding: '6px 12px', borderRadius: 6, border: 'none', background: '#059669', color: 'white', cursor: 'pointer' }}>+</button>
             </div>
           </div>
         ))}
@@ -154,7 +154,7 @@ export default function OrderPage() {
               disabled={loading}
               style={{
                 width: '100%', padding: 16, fontSize: 18,
-                background: loading ? '#ccc' : '#0070f3', color: 'white',
+                background: loading ? '#ccc' : '#059669', color: 'white',
                 border: 'none', borderRadius: 8, cursor: loading ? 'default' : 'pointer',
               }}
             >

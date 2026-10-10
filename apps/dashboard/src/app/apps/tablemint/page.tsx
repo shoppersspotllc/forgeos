@@ -1,14 +1,14 @@
 /**
- * DirectDish Landing Page
+ * TableMint Landing Page
  * Direct restaurant ordering — restaurants keep more.
  */
 
 import Link from 'next/link';
 
-export default function DirectDishPage() {
+export default function TableMintPage() {
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px', fontFamily: 'system-ui' }}>
-      <h1 style={{ fontSize: 36, marginBottom: 8 }}>DirectDish</h1>
+      <h1 style={{ fontSize: 36, marginBottom: 8 }}>TableMint</h1>
       <p style={{ fontSize: 18, color: '#666', marginBottom: 32 }}>
         Order direct. Restaurants keep more. No middleman markup.
       </p>
@@ -26,11 +26,11 @@ export default function DirectDishPage() {
 
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
         <Link
-          href="/apps/directdish/order"
+          href="/apps/tablemint/order"
           style={{
             display: 'inline-block',
             padding: '14px 40px',
-            background: '#0070f3',
+            background: '#059669',
             color: 'white',
             borderRadius: 8,
             textDecoration: 'none',

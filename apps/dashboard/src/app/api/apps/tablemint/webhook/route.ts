@@ -1,6 +1,6 @@
 /**
- * DirectDish Stripe Webhook Handler (TEST MODE MVP)
- * POST /api/apps/directdish/webhook
+ * TableMint Stripe Webhook Handler (TEST MODE MVP)
+ * POST /api/apps/tablemint/webhook
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -25,7 +25,7 @@ function verifySignature(payload: string, signature: string, secret: string): bo
 }
 
 export async function POST(req: NextRequest) {
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET_DIRECTDISH;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET_TABLEMINT;
   if (!webhookSecret) {
     return NextResponse.json({ error: 'Webhook not configured' }, { status: 503 });
   }
@@ -41,12 +41,12 @@ export async function POST(req: NextRequest) {
     const eventId = event.id;
     if (!eventId) return NextResponse.json({ error: 'Invalid event' }, { status: 400 });
 
-    const gs = globalThis as unknown as { __directdish_events?: Set<string> };
-    if (!gs.__directdish_events) gs.__directdish_events = new Set();
-    if (gs.__directdish_events.has(eventId)) {
+    const gs = globalThis as unknown as { __tablemint_events?: Set<string> };
+    if (!gs.__tablemint_events) gs.__tablemint_events = new Set();
+    if (gs.__tablemint_events.has(eventId)) {
       return NextResponse.json({ received: true, duplicate: true });
     }
-    gs.__directdish_events.add(eventId);
+    gs.__tablemint_events.add(eventId);
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       }
       const meta = session.metadata || {};
       const order = {
-        app: 'directdish',
+        app: 'tablemint',
         stripeSessionId: session.id,
         amountTotal: session.amount_total,
         currency: session.currency,
@@ -68,15 +68,15 @@ export async function POST(req: NextRequest) {
         paidAt: new Date().toISOString(),
         testMode: true,
       };
-      console.log('DirectDish order completed:', JSON.stringify(order));
-      const store = globalThis as unknown as { __directdish_orders?: Array<object> };
-      if (!store.__directdish_orders) store.__directdish_orders = [];
-      store.__directdish_orders.push(order);
+      console.log('TableMint order completed:', JSON.stringify(order));
+      const store = globalThis as unknown as { __tablemint_orders?: Array<object> };
+      if (!store.__tablemint_orders) store.__tablemint_orders = [];
+      store.__tablemint_orders.push(order);
     }
 
     return NextResponse.json({ received: true });
   } catch (err) {
-    console.error('DirectDish webhook error:', err);
+    console.error('TableMint webhook error:', err);
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
   }
 }

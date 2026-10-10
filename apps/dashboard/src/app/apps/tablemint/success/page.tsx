@@ -27,7 +27,7 @@ export default function SuccessPage() {
           <li>This was a Stripe test transaction only</li>
         </ul>
       </div>
-      <Link href="/apps/directdish" style={{ color: '#0070f3' }}>← Back to DirectDish</Link>
+      <Link href="/apps/tablemint" style={{ color: '#059669' }}>← Back to TableMint</Link>
     </div>
   );
 }
