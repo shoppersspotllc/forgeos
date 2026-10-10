@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
         testMode: true,
       };
       console.log('SkillSpring enrollment completed:', JSON.stringify(enrollment));
-      const store = globalThis as unknown as { __skillspring_enrollments?: Array<object> };
+      const store = globalThis as unknown as { __skillspring_enrollments?: Array<Record<string, unknown>> };
       if (!store.__skillspring_enrollments) store.__skillspring_enrollments = [];
       store.__skillspring_enrollments.push(enrollment);
     }
