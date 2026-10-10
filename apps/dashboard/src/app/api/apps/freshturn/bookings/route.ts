@@ -12,7 +12,7 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const store = globalThis as unknown as { __freshturn_bookings?: Array<object> };
+  const store = globalThis as unknown as { __freshturn_bookings?: Array<Record<string, unknown>> };
   const bookings = store.__freshturn_bookings || [];
 
   // Strip sensitive fields before returning
