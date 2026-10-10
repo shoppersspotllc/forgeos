@@ -7,7 +7,7 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const store = globalThis as unknown as { __swiftnest_bookings?: Array<object> };
+  const store = globalThis as unknown as { __swiftnest_bookings?: Array<Record<string, unknown>> };
   const bookings = store.__swiftnest_bookings || [];
 
   const safe = bookings.map((b: Record<string, unknown>) => ({

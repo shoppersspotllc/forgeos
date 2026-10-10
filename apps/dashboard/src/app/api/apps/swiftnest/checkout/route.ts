@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
     }
 
     const pkg = PACKAGES[packageId];
-    const lineItems: Array<{ price_data: object; quantity: number }> = [
+    const lineItems: Array<{ price_data: { currency: string; product_data: { name: string }; unit_amount: number }; quantity: number }> = [
       {
         price_data: {
           currency: 'usd',
