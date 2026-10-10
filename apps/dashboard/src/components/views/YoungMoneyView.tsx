@@ -94,7 +94,7 @@ const ENGINES: EngineData[] = [
       'Launch first outreach wave to 7 prospects',
       'Book first 10 research conversations',
     ],
-    platform: { label: 'Open PinDrop', url: 'https://www.pindrop.host' },
+    platform: { label: 'Open PinDrop', url: 'https://www.pindrop.host/dashboard' },
     goalNote: 'PinDrop earns its share of the $50K the day booked conversations turn into paying customers. No outreach has been sent — every future send is tracked here.',
   },
   {
