@@ -71,6 +71,18 @@ const QUANT = {
   ],
 };
 
+// Verified Stripe state (2026-10-10) — TEST pilot. Facts only, no forecasts.
+const PAYMENTS = {
+  rows: [
+    { label: 'Credential', value: 'VERIFIED — SHOPPERS SPOT LLC (via Stripe API)', done: true },
+    { label: 'Key mode', value: 'Stored key is LIVE — TEST key (sk_test_) still required for the pilot', done: false },
+    { label: 'Gateway', value: 'Fail-closed armed — rejects non-sk_test_ keys before any network call', done: true },
+    { label: 'TEST transaction', value: 'PENDING — $1.00 controlled checkout (needs TEST key + preview)', done: false },
+    { label: 'Webhook', value: 'PENDING — signing secret STRIPE_WEBHOOK_SECRET_FRESHTURN not provisioned', done: false },
+    { label: 'Live payments', value: 'DISABLED in code — cannot be enabled through this module', done: true },
+  ],
+};
+
 function PinDropView() {
   const pct = Math.round((PINDROP.credits.remaining / PINDROP.credits.total) * 100);
   return (
@@ -294,6 +306,33 @@ export function YoungMoneyView() {
               </FadeUp>
             ))}
           </div>
+        )}
+
+        {engine === 'overview' && (
+          <FadeUp delay={120}>
+            <GlassPanel glow="#10b981" className="mt-4">
+              <div className="flex items-center gap-2 mb-3">
+                <ShieldCheck className="h-4 w-4" style={{ color: '#10b981' }} />
+                <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>Payments — Stripe TEST pilot</p>
+                <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                      style={{ background: '#f59e0b22', color: '#f59e0b', border: '1px solid #f59e0b55' }}>
+                  TEST ONLY
+                </span>
+              </div>
+              <div className="grid md:grid-cols-2 gap-x-6 gap-y-2 text-xs text-left">
+                {PAYMENTS.rows.map((r) => (
+                  <div key={r.label} className="flex items-start gap-2">
+                    {r.done
+                      ? <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: 'var(--success)' }} />
+                      : <Clock className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: 'var(--warning)' }} />}
+                    <p style={{ color: 'var(--text-secondary)' }}>
+                      <span className="font-semibold" style={{ color: 'var(--text)' }}>{r.label}:</span> {r.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </GlassPanel>
+          </FadeUp>
         )}
 
         {engine === 'pindrop' && <FadeUp><PinDropView /></FadeUp>}

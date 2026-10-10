@@ -65,8 +65,8 @@ export const APP_REGISTRATIONS: AppPaymentRegistration[] = [
     providerId: 'stripe',
     capabilities: ['one_time'],
     webhookSecretEnvVar: 'STRIPE_WEBHOOK_SECRET_FRESHTURN',
-    enabled: false,
-    notes: 'Cleaning bookings. Existing checkout route enforces sk_test_ in code.',
+    enabled: true,
+    notes: 'TEST pilot (2026-10-10): $1.00 controlled checkout via /api/payments/checkout. Gateway fail-closes on non-sk_test_ keys; live payments impossible in code.',
   },
   {
     appId: 'swiftnest',
