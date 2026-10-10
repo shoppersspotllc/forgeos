@@ -47,6 +47,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // SAFETY: Enforce test mode — never allow live keys in this MVP
+    if (!stripeKey.startsWith('sk_test_')) {
+      console.error('TurnoverPro: BLOCKED — non-test Stripe key detected. Live payments are disabled.');
+      return NextResponse.json(
+        { error: 'Payment system is in test mode only.' },
+        { status: 503 }
+      );
+    }
+
     // Build line items
     const pkg = PACKAGES[packageId];
     const lineItems: Array<{ price_data: object; quantity: number }> = [

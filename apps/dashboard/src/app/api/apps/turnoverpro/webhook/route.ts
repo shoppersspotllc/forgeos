@@ -48,13 +48,40 @@ export async function POST(req: NextRequest) {
   try {
     const event = JSON.parse(payload);
 
+    // Idempotency: Stripe may deliver the same event multiple times.
+    // Use the event ID to deduplicate. In production, check against a persistent store.
+    // For MVP: track processed event IDs in memory (resets on deploy — acceptable for test mode).
+    const eventId = event.id;
+    if (!eventId) {
+      console.error('TurnoverPro webhook: missing event ID');
+      return NextResponse.json({ error: 'Invalid event' }, { status: 400 });
+    }
+
+    // In-memory deduplication (use Redis/DB in production)
+    const globalStore = globalThis as unknown as { __turnoverpro_events?: Set<string> };
+    if (!globalStore.__turnoverpro_events) {
+      globalStore.__turnoverpro_events = new Set();
+    }
+    if (globalStore.__turnoverpro_events.has(eventId)) {
+      console.log(`TurnoverPro webhook: duplicate event ${eventId} ignored`);
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+    globalStore.__turnoverpro_events.add(eventId);
+
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       const meta = session.metadata || {};
 
+      // Verify this is a test-mode payment (defense in depth)
+      if (session.livemode) {
+        console.error('TurnoverPro webhook: BLOCKED live-mode payment in test MVP');
+        return NextResponse.json({ error: 'Live payments not accepted' }, { status: 400 });
+      }
+
       const booking = {
         app: 'turnoverpro',
         stripeSessionId: session.id,
+        stripeEventId: eventId,
         amountTotal: session.amount_total,
         currency: session.currency,
         customerEmail: session.customer_email,
@@ -70,12 +97,19 @@ export async function POST(req: NextRequest) {
         testMode: !session.livemode,
       };
 
-      // Log booking (in production, this would write to a database)
-      // For MVP: log to console + append to Young Money revenue tracking
+      // Log booking (MVP: console + in-memory. Production needs persistent DB.)
+      // WARNING: Bookings are lost on server restart/deploy. This is test-mode only.
       console.log('TurnoverPro booking completed:', JSON.stringify(booking));
 
-      // TODO: Send confirmation email, notify operations team
-      // TODO: Write to persistent booking store
+      // Store in-memory for retrieval via API (lost on restart)
+      const bookingStore = globalThis as unknown as { __turnoverpro_bookings?: Array<object> };
+      if (!bookingStore.__turnoverpro_bookings) {
+        bookingStore.__turnoverpro_bookings = [];
+      }
+      bookingStore.__turnoverpro_bookings.push(booking);
+
+      // TODO (production): Write to persistent database
+      // TODO (production): Send confirmation email — NOT IMPLEMENTED in MVP
     }
 
     return NextResponse.json({ received: true });
