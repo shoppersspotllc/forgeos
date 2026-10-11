@@ -89,7 +89,11 @@ function DotChat({ dot, onClose }: { dot: Dot; onClose: () => void }) {
            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', height: '70vh' }}>
         {/* Header */}
         <div className="flex items-center gap-3 p-4" style={{ borderBottom: '1px solid var(--border)' }}>
-          <BotAvatar name={dot.name} emoji={dot.emoji} size={40} status={dot.status} />
+          {dot.avatar ? (
+            <img src={dot.avatar} alt={dot.name} width={40} height={40} style={{ borderRadius: '50%', objectFit: 'cover' }} />
+          ) : (
+            <BotAvatar name={dot.name} emoji={dot.emoji} size={40} status={dot.status} />
+          )}
           <div className="flex-1">
             <p className="font-bold" style={{ color: 'var(--text)' }}>{dot.name}</p>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{dot.role} · via ForgeOS AI ({dot.capability})</p>
@@ -195,7 +199,11 @@ export function MyDotsView() {
                    className={dot.status === 'offline' ? 'opacity-60' : 'cursor-pointer'}>
                 <GlassPanel hover={dot.status !== 'offline'}>
                   <div className="flex items-start gap-4 mb-4">
-                    <BotAvatar name={dot.name} emoji={dot.emoji} size={56} status={dot.status} />
+                    {dot.avatar ? (
+            <img src={dot.avatar} alt={dot.name} width={56} height={56} style={{ borderRadius: '50%', objectFit: 'cover' }} />
+          ) : (
+            <BotAvatar name={dot.name} emoji={dot.emoji} size={56} status={dot.status} />
+          )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h3 className="font-bold text-lg" style={{ color: 'var(--text)' }}>{dot.name}</h3>
