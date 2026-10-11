@@ -9,6 +9,7 @@ import { Send, Loader2, X, BarChart3 } from 'lucide-react';
 interface Dot {
   name: string;
   emoji: string;
+  avatar?: string;
   role: string;
   specialty: string;
   status: 'online' | 'busy' | 'offline';
@@ -24,6 +25,7 @@ const DOTS: Dot[] = [
   { name: 'Hunter', emoji: '🎯', role: 'Outreach Specialist', specialty: 'Lead engagement & conversion', status: 'online', tasksCompleted: 29, performance: 88, capability: 'chat' },
   { name: 'Shepherd', emoji: '🐑', role: 'Relationship Manager', specialty: 'Nurturing & follow-up', status: 'offline', tasksCompleted: 33, performance: 90, capability: 'chat' },
   { name: 'Closer', emoji: '💰', role: 'Deal Closer', specialty: 'Final conversion & revenue', status: 'busy', tasksCompleted: 21, performance: 93, capability: 'chat' },
+  { name: 'Cherri', emoji: '✨', avatar: '/cherri.png', role: 'AI Business Engineer', specialty: 'Business architecture & founder guidance', status: 'online', tasksCompleted: 0, performance: 100, capability: 'chat' },
 ];
 
 interface Message {
