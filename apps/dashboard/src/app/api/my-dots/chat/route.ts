@@ -81,6 +81,7 @@ const DOT_PERSONAS: Record<string, { role: string; specialty: string; capability
   Hunter: { role: 'Outreach Specialist', specialty: 'Lead engagement & conversion', capability: 'chat' },
   Shepherd: { role: 'Relationship Manager', specialty: 'Nurturing & follow-up', capability: 'chat' },
   Closer: { role: 'Deal Closer', specialty: 'Final conversion & revenue', capability: 'chat' },
+  Cherri: { role: 'AI Business Engineer', specialty: 'Business architecture & founder guidance', capability: 'chat' },
 };
 
 // Shared research capabilities (for Dots WITHOUT tool-loop access —
