@@ -11,19 +11,25 @@ interface Dot {
   emoji: string;
   role: string;
   specialty: string;
-  status: 'online' | 'busy' | 'offline';
-  tasksCompleted: number;
-  performance: number;
+  status: 'online' | 'busy' | 'offline' | 'unknown';
+  // Verified task counts / reliability do not exist yet (2026-10-12).
+  // Null renders "No verified data yet" instead of fictional numbers.
+  tasksCompleted: number | null;
+  performance: number | null;
   capability: string;
 }
 
 const DOTS: Dot[] = [
-  { name: 'Scout', emoji: '🔍', role: 'Research Specialist', specialty: 'Market intelligence & discovery', status: 'online', tasksCompleted: 47, performance: 94, capability: 'chat' },
-  { name: 'Analyst', emoji: '📊', role: 'Data Analyst', specialty: 'Deep analysis & insights', status: 'busy', tasksCompleted: 38, performance: 91, capability: 'chat' },
-  { name: 'Craftsman', emoji: '🔨', role: 'Build Engineer', specialty: 'Implementation & construction', status: 'online', tasksCompleted: 52, performance: 96, capability: 'coding' },
-  { name: 'Hunter', emoji: '🎯', role: 'Outreach Specialist', specialty: 'Lead engagement & conversion', status: 'online', tasksCompleted: 29, performance: 88, capability: 'chat' },
-  { name: 'Shepherd', emoji: '🐑', role: 'Relationship Manager', specialty: 'Nurturing & follow-up', status: 'offline', tasksCompleted: 33, performance: 90, capability: 'chat' },
-  { name: 'Closer', emoji: '💰', role: 'Deal Closer', specialty: 'Final conversion & revenue', status: 'busy', tasksCompleted: 21, performance: 93, capability: 'chat' },
+  // NOTE (2026-10-12): tasksCompleted/performance were hardcoded literals,
+  // not measurements. Set to null until the Governor provides verified counts.
+  // Statuses are 'unknown' (no liveness source) except Scout, which has a
+  // proven browser-execution path (vertical slice).
+  { name: 'Scout', emoji: '🔍', role: 'Research Specialist', specialty: 'Market intelligence & discovery', status: 'online', tasksCompleted: null, performance: null, capability: 'chat' },
+  { name: 'Analyst', emoji: '📊', role: 'Data Analyst', specialty: 'Deep analysis & insights', status: 'unknown', tasksCompleted: null, performance: null, capability: 'chat' },
+  { name: 'Craftsman', emoji: '🔨', role: 'Build Engineer', specialty: 'Implementation & construction', status: 'unknown', tasksCompleted: null, performance: null, capability: 'coding' },
+  { name: 'Hunter', emoji: '🎯', role: 'Outreach Specialist', specialty: 'Lead engagement & conversion', status: 'unknown', tasksCompleted: null, performance: null, capability: 'chat' },
+  { name: 'Shepherd', emoji: '🐑', role: 'Relationship Manager', specialty: 'Nurturing & follow-up', status: 'unknown', tasksCompleted: null, performance: null, capability: 'chat' },
+  { name: 'Closer', emoji: '💰', role: 'Deal Closer', specialty: 'Final conversion & revenue', status: 'unknown', tasksCompleted: null, performance: null, capability: 'chat' },
 ];
 
 interface Message {
@@ -154,7 +160,6 @@ function DotChat({ dot, onClose }: { dot: Dot; onClose: () => void }) {
 
 export function MyDotsView() {
   const [activeDot, setActiveDot] = useState<Dot | null>(null);
-  const onlineCount = DOTS.filter(d => d.status === 'online').length;
 
   return (
     <div className="relative min-h-full">
@@ -164,23 +169,24 @@ export function MyDotsView() {
           <SectionHeader
             eyebrow="AI Workforce — Click a Dot to execute"
             title="My Dots"
-            description="Real executable workers. Click any Dot to assign tasks via ForgeOS AI. No simulation."
+            description="Dot roster. Scout has a proven browser-execution path (vertical slice, 2026-10-12); other Dots are chat-only until onboarded. Metrics appear after Governor verification."
             accent="#10b981"
           />
         </FadeUp>
 
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[
-            { label: 'Active Dots', value: onlineCount, total: DOTS.length },
-            { label: 'Tasks Completed', value: DOTS.reduce((a, d) => a + d.tasksCompleted, 0) },
-            { label: 'Avg Performance', value: Math.round(DOTS.reduce((a, d) => a + d.performance, 0) / DOTS.length), suffix: '%' },
-          ].map((s, i) => (
+            { label: 'Dots Defined', value: DOTS.length },
+            { label: 'Verified Tasks', value: '—', sub: 'no verified task data yet' },
+            { label: 'Reliability', value: '—', sub: 'measured after Governor ships' },
+          ].map((s: any, i) => (
             <FadeUp key={s.label} delay={i * 80}>
               <GlassPanel glow="#10b981">
                 <p className="text-3xl font-extrabold" style={{ color: 'var(--text)' }}>
                   {s.value}{s.suffix || ''}{s.total && <span className="text-lg" style={{ color: 'var(--text-muted)' }}>/{s.total}</span>}
                 </p>
                 <p className="text-xs uppercase tracking-widest font-semibold mt-1" style={{ color: 'var(--text-muted)' }}>{s.label}</p>
+                {s.sub && <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted)' }}>{s.sub}</p>}
               </GlassPanel>
             </FadeUp>
           ))}
@@ -206,18 +212,22 @@ export function MyDotsView() {
                   <div className="mb-3">
                     <div className="flex justify-between text-xs mb-1">
                       <span style={{ color: 'var(--text-muted)' }}>Performance</span>
-                      <span className="font-bold" style={{ color: 'var(--text)' }}>{dot.performance}%</span>
+                      <span className="font-bold" style={{ color: 'var(--text)' }}>
+                        {dot.performance === null ? 'No verified data yet' : `${dot.performance}%`}
+                      </span>
                     </div>
-                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface)' }}>
-                      <div className="h-full rounded-full" style={{ width: `${dot.performance}%`, background: 'linear-gradient(90deg, #10b981, #06b6d4)' }} />
-                    </div>
+                    {dot.performance !== null && (
+                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface)' }}>
+                        <div className="h-full rounded-full" style={{ width: `${dot.performance}%`, background: 'linear-gradient(90deg, #10b981, #06b6d4)' }} />
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center justify-between pt-3" style={{ borderTop: '1px solid var(--border)' }}>
                     <span className="text-xs flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
-                      <BarChart3 className="h-3.5 w-3.5" /> {dot.tasksCompleted} tasks
+                      <BarChart3 className="h-3.5 w-3.5" /> {dot.tasksCompleted === null ? 'No verified tasks yet' : `${dot.tasksCompleted} tasks`}
                     </span>
                     <span className="text-xs font-bold" style={{ color: dot.status === 'offline' ? 'var(--text-muted)' : '#10b981' }}>
-                      {dot.status === 'offline' ? 'Offline' : 'Click to execute →'}
+                      {dot.status === 'offline' ? 'Offline' : dot.status === 'unknown' ? 'Click to chat →' : 'Click to execute →'}
                     </span>
                   </div>
                 </GlassPanel>

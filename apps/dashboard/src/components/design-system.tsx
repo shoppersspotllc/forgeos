@@ -137,7 +137,7 @@ const AVATAR_GRADIENTS = [
 ];
 
 export function BotAvatar({ name, emoji, size = 48, status = 'online' }: {
-  name: string; emoji: string; size?: number; status?: 'online' | 'busy' | 'offline';
+  name: string; emoji: string; size?: number; status?: 'online' | 'busy' | 'offline' | 'unknown';
 }) {
   const hash = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
   const gradient = AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length];
@@ -164,13 +164,14 @@ export function BotAvatar({ name, emoji, size = 48, status = 'online' }: {
 }
 
 // ---------- StatusPill ----------
-export function StatusPill({ status }: { status: 'online' | 'available' | 'offline' | 'setup' | 'busy' }) {
+export function StatusPill({ status }: { status: 'online' | 'available' | 'offline' | 'setup' | 'busy' | 'unknown' }) {
   const map = {
     online: { bg: 'var(--success)', label: 'Online' },
     available: { bg: 'var(--success)', label: 'Available' },
     offline: { bg: 'var(--text-muted)', label: 'Offline' },
     setup: { bg: 'var(--warning)', label: 'Setup required' },
     busy: { bg: 'var(--warning)', label: 'Busy' },
+    unknown: { bg: 'var(--text-muted)', label: 'Unknown' },
   };
   const s = map[status];
   return (
