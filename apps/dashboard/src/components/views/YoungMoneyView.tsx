@@ -616,7 +616,12 @@ function PlatformDetail({ platform, onBack }: { platform: Platform; onBack: () =
       )}
 
       {/* Mission Command Strip — instruct Muse/MyDots to build */}
-      <MissionStrip platformId={platform.id} platformName={platform.name} platformColor={platform.color} />
+      <MissionStrip
+        platformId={platform.id}
+        platformName={platform.name}
+        platformColor={platform.color}
+        platformUrl={platform.dashboardUrl}
+      />
 
       {/* Projects with revenue playbooks */}
       <h3 className="text-lg font-extrabold mb-3 flex items-center gap-2" style={{ color: 'var(--text)' }}>

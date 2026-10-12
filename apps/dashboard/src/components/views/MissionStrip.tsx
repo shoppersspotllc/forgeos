@@ -27,10 +27,11 @@ const TEMPLATES = [
   { label: 'HVAC in Houston', instruction: 'Create 3 professional websites for HVAC companies in Houston, TX' },
 ];
 
-export function MissionStrip({ platformId, platformName, platformColor }: {
+export function MissionStrip({ platformId, platformName, platformColor, platformUrl }: {
   platformId: string;
   platformName: string;
   platformColor: string;
+  platformUrl?: string;
 }) {
   const [instruction, setInstruction] = useState('');
   const [missions, setMissions] = useState<Mission[]>([]);
@@ -92,6 +93,11 @@ export function MissionStrip({ platformId, platformName, platformColor }: {
       const updated = await res.json();
       if (!updated.error) {
         setMissions((prev) => prev.map((m) => (m.id === id ? updated : m)));
+      }
+      // On approve: land the user on the actual platform in a new tab
+      // so they can watch alongside the execution browser.
+      if (status === 'approved' && platformUrl) {
+        window.open(platformUrl, '_blank', 'noopener,noreferrer');
       }
     } catch {
       // ignore — status will refresh on next load
@@ -189,6 +195,7 @@ export function MissionStrip({ platformId, platformName, platformColor }: {
                   <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
                     Nothing has been built. No credits used. No platforms accessed.
                     Approving lets Muse + Dots use ~{m.creditsEstimated} credits and access {platformName} to build &amp; deploy.
+                    {platformUrl && <> {platformName} will open in a new tab so you can follow along.</>}
                   </p>
                   <button
                     onClick={() => updateStatus(m.id, 'approved')}
@@ -196,6 +203,19 @@ export function MissionStrip({ platformId, platformName, platformColor }: {
                     style={{ background: `linear-gradient(135deg, ${platformColor}, ${platformColor}cc)`, color: '#fff', border: 'none', cursor: 'pointer' }}>
                     Approve &amp; Execute
                   </button>
+                </div>
+              )}
+
+              {/* After approval: guide to the visible execution */}
+              {m.status === 'approved' && (
+                <div className="mt-3 p-3 rounded-xl" style={{ background: '#10b9810d', border: '1px solid #10b98144' }}>
+                  <p className="text-xs font-bold mb-1" style={{ color: '#10b981' }}>
+                    Approved — {platformName} opened in a new tab
+                  </p>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    Say <strong>"go"</strong> in chat and Muse will start the visible browser execution —
+                    you'll watch every step in the browser panel.
+                  </p>
                 </div>
               )}
             </div>
