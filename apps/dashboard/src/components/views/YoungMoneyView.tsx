@@ -12,6 +12,7 @@ import {
   CalendarDays, Flag, ExternalLink, PlayCircle, Wrench, MousePointerClick, User, Zap,
   ShieldCheck, Megaphone, FlaskConical, Code2, Handshake,
 } from 'lucide-react';
+import { MissionStrip } from './MissionStrip';
 
 /* ------------------------------------------------------------------ */
 /*  Data — honest state, no fabrication                               */
@@ -593,6 +594,9 @@ function PlatformDetail({ platform, onBack }: { platform: Platform; onBack: () =
           </p>
         </GlassPanel>
       )}
+
+      {/* Mission Command Strip — instruct Muse/MyDots to build */}
+      <MissionStrip platformId={platform.id} platformName={platform.name} platformColor={platform.color} />
 
       {/* Projects with revenue playbooks */}
       <h3 className="text-lg font-extrabold mb-3 flex items-center gap-2" style={{ color: 'var(--text)' }}>
