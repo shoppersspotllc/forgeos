@@ -85,7 +85,7 @@ const PLATFORMS: Platform[] = [
     icon: Target,
     color: '#f59e0b',
     revenue: 0,
-    dashboardUrl: 'https://pindrop.host/',
+    dashboardUrl: 'https://pindrop.host/dashboard',
     dashboardLabel: 'Open PinDrop Dashboard',
     credits: {
       total: 2000,

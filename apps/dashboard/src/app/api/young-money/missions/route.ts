@@ -101,3 +101,28 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   return NextResponse.json({ missions });
 }
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const id = String(body.id || '');
+    const status = String(body.status || '');
+    const result = body.result ? String(body.result) : undefined;
+
+    if (!id || !['queued', 'running', 'done', 'failed'].includes(status)) {
+      return NextResponse.json({ error: 'id and valid status required' }, { status: 400 });
+    }
+
+    const mission = missions.find((m) => m.id === id);
+    if (!mission) {
+      return NextResponse.json({ error: 'mission not found' }, { status: 404 });
+    }
+
+    mission.status = status as Mission['status'];
+    if (result) mission.result = result;
+
+    return NextResponse.json(mission);
+  } catch {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  }
+}
