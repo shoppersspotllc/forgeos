@@ -9,7 +9,7 @@ import {
   DollarSign, Target, Link2, TrendingUp, Wallet, ShieldCheck, Bot,
   ChevronDown, ChevronRight, AlertTriangle, CheckCircle2, Clock, Pause,
   Rocket, Sparkles, Brain, Hammer, Radar, HeartHandshake, Handshake,
-  CalendarDays, Flag, Ban, CircleDot,
+  CalendarDays, Flag, Ban, CircleDot, ExternalLink,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -26,6 +26,7 @@ interface Project {
   status: string;
   statusTone: 'good' | 'warn' | 'bad' | 'idle';
   detail: string;
+  url?: string; // Clicking the project opens this URL in a new tab
 }
 
 interface Platform {
@@ -50,7 +51,7 @@ const PLATFORMS: Platform[] = [
     color: '#f59e0b',
     revenue: 0,
     projects: [
-      { name: 'Delco Air', status: 'Published & emailed', statusTone: 'good', detail: 'Live at delco-air.yoursite.page — $299 setup + $39/mo offer sent. Awaiting reply.' },
+      { name: 'Delco Air', status: 'Published & emailed', statusTone: 'good', detail: 'Live site — $299 setup + $39/mo offer sent. Awaiting reply.', url: 'https://delco-air.yoursite.page/' },
       { name: 'Midair', status: 'Prospect #1 — outreach HELD', statusTone: 'warn', detail: 'Scored 75/75. Top TX HVAC target. Waiting on your call: phone or email?' },
       { name: '6 TX HVAC prospects', status: 'Verified — outreach HELD', statusTone: 'warn', detail: 'Scored 52–68/75. Research complete. Same blocker: your outreach decision.' },
     ],
@@ -66,9 +67,9 @@ const PLATFORMS: Platform[] = [
     color: '#8b5cf6',
     revenue: 0,
     projects: [
-      { name: 'BidReady AI', status: 'Building — 1/7 tasks', statusTone: 'idle', detail: '33 files changed, 137 tool calls. In progress.' },
-      { name: 'QuickBill Invoice Generator', status: 'Building', statusTone: 'idle', detail: 'Chat active, 3.3% context used. In progress.' },
-      { name: 'Founder Studio site', status: 'Live', statusTone: 'good', detail: 'www.shoppersspotllc.com serving. Redirect fix in flight.' },
+      { name: 'BidReady AI', status: 'Building — 1/7 tasks', statusTone: 'idle', detail: '33 files changed, 137 tool calls. In progress.', url: 'https://studio.shogo.ai/' },
+      { name: 'QuickBill Invoice Generator', status: 'Building', statusTone: 'idle', detail: 'Chat active, 3.3% context used. In progress.', url: 'https://studio.shogo.ai/' },
+      { name: 'Founder Studio site', status: 'Live', statusTone: 'good', detail: 'www.shoppersspotllc.com serving. Redirect fix in flight.', url: 'https://www.shoppersspotllc.com/' },
     ],
     botActivity: 'Shogo is the builder — you direct it in studio.shogo.ai. No ForgeOS bot runs these; they are your builds.',
     blocker: 'None — build at your pace. These become revenue when you launch them.',
@@ -82,7 +83,7 @@ const PLATFORMS: Platform[] = [
     color: '#10b981',
     revenue: 0,
     projects: [
-      { name: 'Soulmate Sketch review', status: 'Ready to publish', statusTone: 'warn', detail: 'Experiment #1. HopLinks verified, compliance 11/11 PASS. Waiting on your go-ahead.' },
+      { name: 'Soulmate Sketch review', status: 'Ready to publish', statusTone: 'warn', detail: 'Experiment #1. HopLinks verified, compliance 11/11 PASS. Waiting on your go-ahead.', url: 'https://guides.shoppersspotllc.com/' },
       { name: 'ClickBank', status: 'Contract accepted', statusTone: 'good', detail: 'Nickname + vendor ID configured. Ready.' },
       { name: 'Deel / beehiiv / Kit / Amazon', status: 'Queued', statusTone: 'idle', detail: 'Applications submitted or queued. No action needed yet.' },
     ],
@@ -266,19 +267,35 @@ function PlatformCard({ platform, expanded, onToggle }: {
               <Flag className="h-4 w-4" style={{ color: platform.color }} /> Projects
             </h4>
             <div className="space-y-2 mb-5">
-              {platform.projects.map((p) => (
-                <div key={p.name} className="p-3 rounded-xl"
-                     style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold text-sm" style={{ color: 'var(--text)' }}>{p.name}</p>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
-                          style={{ background: `${statusColor(p.statusTone)}22`, color: statusColor(p.statusTone) }}>
-                      {p.status}
-                    </span>
+              {platform.projects.map((p) => {
+                const inner = (
+                  <>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold text-sm flex items-center gap-1.5" style={{ color: 'var(--text)' }}>
+                        {p.name}
+                        {p.url && <ExternalLink className="h-3.5 w-3.5" style={{ color: 'var(--accent)' }} />}
+                      </p>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
+                            style={{ background: `${statusColor(p.statusTone)}22`, color: statusColor(p.statusTone) }}>
+                        {p.status}
+                      </span>
+                    </div>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{p.detail}</p>
+                  </>
+                );
+                return p.url ? (
+                  <a key={p.name} href={p.url} target="_blank" rel="noopener noreferrer"
+                     className="block p-3 rounded-xl transition-all hover:scale-[1.01]"
+                     style={{ background: 'var(--surface)', border: '1px solid var(--border)', textDecoration: 'none' }}>
+                    {inner}
+                  </a>
+                ) : (
+                  <div key={p.name} className="p-3 rounded-xl"
+                       style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                    {inner}
                   </div>
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{p.detail}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Bot activity */}
