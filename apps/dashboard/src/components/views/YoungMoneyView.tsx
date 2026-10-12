@@ -9,7 +9,7 @@ import {
   DollarSign, Target, Link2, TrendingUp,
   ChevronRight, AlertTriangle, CheckCircle2, Clock,
   Rocket, Sparkles, Bot, ArrowLeft,
-  CalendarDays, Flag, ExternalLink, PlayCircle,
+  CalendarDays, Flag, ExternalLink, PlayCircle, Wrench,
   ShieldCheck, Megaphone, FlaskConical, Code2, Handshake,
 } from 'lucide-react';
 
@@ -348,6 +348,150 @@ function MisHeader() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Project card with Fix & Deploy                                    */
+/* ------------------------------------------------------------------ */
+
+interface FixState {
+  loading: boolean;
+  result: {
+    actionTaken: string | null;
+    newBlockerStatus: string;
+    remainingBlockers: string[];
+    needsOwnerDecision: string | null;
+    resolved: boolean;
+  } | null;
+}
+
+function ProjectCard({ platform, project }: { platform: Platform; project: Project }) {
+  const [fix, setFix] = useState<FixState>({ loading: false, result: null });
+
+  const handleFix = async () => {
+    setFix({ loading: true, result: null });
+    try {
+      const res = await fetch('/api/young-money/fix-deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platform: platform.id, project: project.name }),
+      });
+      const data = await res.json();
+      setFix({ loading: false, result: data });
+    } catch {
+      setFix({
+        loading: false,
+        result: {
+          actionTaken: null,
+          newBlockerStatus: 'Fix attempt failed — network error. Try again.',
+          remainingBlockers: ['Network error'],
+          needsOwnerDecision: null,
+          resolved: false,
+        },
+      });
+    }
+  };
+
+  // Show revised blocker status if fix was run, otherwise original
+  const blockerText = fix.result ? fix.result.newBlockerStatus : project.playbook.whatsStopping;
+
+  return (
+    <GlassPanel>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        {project.url ? (
+          <a href={project.url} target="_blank" rel="noopener noreferrer"
+             className="font-bold text-base flex items-center gap-1.5 hover:opacity-80"
+             style={{ color: 'var(--text)', textDecoration: 'none' }}>
+            {project.name} <ExternalLink className="h-4 w-4" style={{ color: 'var(--accent)' }} />
+          </a>
+        ) : (
+          <p className="font-bold text-base" style={{ color: 'var(--text)' }}>{project.name}</p>
+        )}
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap"
+              style={{ background: `${toneColor(project.statusTone)}22`, color: toneColor(project.statusTone) }}>
+          {project.status}
+        </span>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-3">
+        <div className="p-3 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+          <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: platform.color }}>Where are we now</p>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{project.playbook.whereNow}</p>
+        </div>
+        <div className="p-3 rounded-xl" style={{ background: '#f59e0b0d', border: '1px solid #f59e0b33' }}>
+          <p className="text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1" style={{ color: '#f59e0b' }}>
+            <AlertTriangle className="h-3.5 w-3.5" /> What's stopping us
+          </p>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{blockerText}</p>
+
+          {/* Fix & Deploy button */}
+          <button
+            onClick={handleFix}
+            disabled={fix.loading}
+            className="mt-3 w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-50"
+            style={{
+              background: `linear-gradient(135deg, ${platform.color}, ${platform.color}cc)`,
+              color: '#fff',
+              border: 'none',
+              cursor: fix.loading ? 'wait' : 'pointer',
+            }}>
+            {fix.loading ? (
+              <>Working…</>
+            ) : (
+              <><Wrench className="h-4 w-4" /> Fix & Deploy</>
+            )}
+          </button>
+
+          {/* Fix result */}
+          {fix.result && (
+            <div className="mt-3 space-y-2">
+              {fix.result.actionTaken && (
+                <div className="p-2.5 rounded-lg text-xs" style={{ background: '#10b98115', border: '1px solid #10b98133', color: 'var(--text-secondary)' }}>
+                  <p className="font-bold mb-1" style={{ color: '#10b981' }}>Muse acted:</p>
+                  {fix.result.actionTaken}
+                </div>
+              )}
+              {fix.result.needsOwnerDecision && (
+                <div className="p-2.5 rounded-lg text-xs" style={{ background: '#f59e0b15', border: '1px solid #f59e0b44', color: 'var(--text-secondary)' }}>
+                  <p className="font-bold mb-1" style={{ color: '#f59e0b' }}>Needs your decision:</p>
+                  {fix.result.needsOwnerDecision}
+                </div>
+              )}
+              {fix.result.remainingBlockers.length > 0 && (
+                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <p className="font-semibold mb-1">Remaining blockers:</p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    {fix.result.remainingBlockers.map((b, i) => <li key={i}>{b}</li>)}
+                  </ul>
+                </div>
+              )}
+              {fix.result.resolved && (
+                <p className="text-xs font-bold" style={{ color: '#10b981' }}>✓ All blockers resolved!</p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="p-3 rounded-xl mt-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+        <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#10b981' }}>What can be done — best path to revenue</p>
+        <ul className="space-y-1.5">
+          {project.playbook.whatToDo.map((step, i) => (
+            <li key={i} className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" style={{ color: '#10b981' }} />
+              {step}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="flex items-center gap-3 mt-3 p-3 rounded-xl"
+           style={{ background: `linear-gradient(135deg, ${platform.color}18, transparent)`, border: `1px solid ${platform.color}44` }}>
+        <PlayCircle className="h-5 w-5 shrink-0" style={{ color: platform.color }} />
+        <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{project.playbook.resolution}</p>
+      </div>
+    </GlassPanel>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Platform detail — the drill-down dashboard                        */
 /* ------------------------------------------------------------------ */
 
@@ -394,54 +538,7 @@ function PlatformDetail({ platform, onBack }: { platform: Platform; onBack: () =
       </h3>
       <div className="space-y-4 mb-8">
         {platform.projects.map((p) => (
-          <GlassPanel key={p.name}>
-            <div className="flex items-center justify-between gap-2 mb-3">
-              {p.url ? (
-                <a href={p.url} target="_blank" rel="noopener noreferrer"
-                   className="font-bold text-base flex items-center gap-1.5 hover:opacity-80"
-                   style={{ color: 'var(--text)', textDecoration: 'none' }}>
-                  {p.name} <ExternalLink className="h-4 w-4" style={{ color: 'var(--accent)' }} />
-                </a>
-              ) : (
-                <p className="font-bold text-base" style={{ color: 'var(--text)' }}>{p.name}</p>
-              )}
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap"
-                    style={{ background: `${toneColor(p.statusTone)}22`, color: toneColor(p.statusTone) }}>
-                {p.status}
-              </span>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: platform.color }}>Where are we now</p>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{p.playbook.whereNow}</p>
-              </div>
-              <div className="p-3 rounded-xl" style={{ background: '#f59e0b0d', border: '1px solid #f59e0b33' }}>
-                <p className="text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1" style={{ color: '#f59e0b' }}>
-                  <AlertTriangle className="h-3.5 w-3.5" /> What's stopping us
-                </p>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{p.playbook.whatsStopping}</p>
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl mt-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-              <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#10b981' }}>What can be done — best path to revenue</p>
-              <ul className="space-y-1.5">
-                {p.playbook.whatToDo.map((step, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" style={{ color: '#10b981' }} />
-                    {step}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="flex items-center gap-3 mt-3 p-3 rounded-xl"
-                 style={{ background: `linear-gradient(135deg, ${platform.color}18, transparent)`, border: `1px solid ${platform.color}44` }}>
-              <PlayCircle className="h-5 w-5 shrink-0" style={{ color: platform.color }} />
-              <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{p.playbook.resolution}</p>
-            </div>
-          </GlassPanel>
+          <ProjectCard key={p.name} platform={platform} project={p} />
         ))}
       </div>
 
