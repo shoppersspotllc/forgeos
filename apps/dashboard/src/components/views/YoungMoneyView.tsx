@@ -9,7 +9,7 @@ import {
   DollarSign, Target, Link2, TrendingUp,
   ChevronRight, AlertTriangle, CheckCircle2, Clock,
   Rocket, Sparkles, Bot, ArrowLeft,
-  CalendarDays, Flag, ExternalLink, PlayCircle, Wrench, MousePointerClick,
+  CalendarDays, Flag, ExternalLink, PlayCircle, Wrench, MousePointerClick, User, Zap,
   ShieldCheck, Megaphone, FlaskConical, Code2, Handshake,
 } from 'lucide-react';
 
@@ -34,6 +34,8 @@ interface Project {
   status: string;
   statusTone: 'good' | 'warn' | 'bad' | 'idle';
   url?: string;
+  createdBy: string; // creator info
+  createdOn?: string;
   playbook: RevenuePlaybook;
 }
 
@@ -52,6 +54,24 @@ interface Platform {
   revenue: number;
   projects: Project[];
   dots: DotAssignment[];
+  credits?: {
+    total: number;
+    available: number;
+    used: number;
+    refreshDay: number; // day of month credits refresh
+  };
+}
+
+/* PinDrop credits: 2,000/mo plan, 1,750 remaining as of 2026-10-12, refresh on the 30th */
+function daysUntilRefresh(refreshDay: number): number {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  let target = new Date(y, m, refreshDay);
+  if (target <= now) {
+    target = new Date(y, m + 1, refreshDay);
+  }
+  return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 const PLATFORMS: Platform[] = [
@@ -62,10 +82,18 @@ const PLATFORMS: Platform[] = [
     icon: Target,
     color: '#f59e0b',
     revenue: 0,
+    credits: {
+      total: 2000,
+      available: 1750,
+      used: 250,
+      refreshDay: 30,
+    },
     projects: [
       {
         name: 'Delco Air', status: 'Published & emailed', statusTone: 'good',
         url: 'https://delco-air.yoursite.page/',
+        createdBy: 'Craftsman',
+        createdOn: 'Oct 2026',
         playbook: {
           whereNow: 'Website is live. Offer email ($299 setup + $39/mo) sent to delco_air@yahoo.com. No reply yet.',
           whatsStopping: 'Waiting on the prospect to respond. One email is easy to miss or ignore.',
@@ -75,32 +103,6 @@ const PLATFORMS: Platform[] = [
             'Offer a 15-min free site audit as a hook',
           ],
           resolution: 'Follow-up reminder is set for Oct 14. If no reply, approve the phone call and Hunter dials.',
-        },
-      },
-      {
-        name: 'Midair', status: 'Prospect #1 — outreach HELD', statusTone: 'warn',
-        playbook: {
-          whereNow: 'Scored 75/75 — top TX HVAC target. Research complete. Zero outreach sent.',
-          whatsStopping: 'You have not decided: phone or email outreach. The team cannot act without your call.',
-          whatToDo: [
-            'You decide: phone or email (one word from you)',
-            'Hunter sends/calls within 24h of your decision',
-            'Shepherd follows up in 3 days if no response',
-          ],
-          resolution: 'Tell Muse "phone" or "email" — outreach launches the same day.',
-        },
-      },
-      {
-        name: '6 TX HVAC prospects', status: 'Verified — outreach HELD', statusTone: 'warn',
-        playbook: {
-          whereNow: '6 verified prospects scored 52–68/75. Research done. Zero outreach sent.',
-          whatsStopping: 'Same blocker as Midair — your outreach channel decision holds all 7 prospects.',
-          whatToDo: [
-            'Batch outreach once you decide the channel',
-            'Prioritize by score: highest first',
-            'Track replies in one sheet so nothing slips',
-          ],
-          resolution: 'One decision from you unlocks all 7 prospects at once.',
         },
       },
     ],
@@ -124,6 +126,8 @@ const PLATFORMS: Platform[] = [
       {
         name: 'BidReady AI', status: 'Building — 1/7 tasks', statusTone: 'idle',
         url: 'https://studio.shogo.ai/',
+        createdBy: 'Shogo AI',
+        createdOn: 'Oct 2026',
         playbook: {
           whereNow: '33 files changed, 137 tool calls. Task 1 of 7 in progress.',
           whatsStopping: 'Build is mid-flight — needs your direction in Shogo Studio to continue.',
@@ -138,6 +142,8 @@ const PLATFORMS: Platform[] = [
       {
         name: 'QuickBill Invoice Generator', status: 'Building', statusTone: 'idle',
         url: 'https://studio.shogo.ai/',
+        createdBy: 'Shogo AI',
+        createdOn: 'Oct 2026',
         playbook: {
           whereNow: 'Chat active, 3.3% context used. Early build stage.',
           whatsStopping: 'Needs your input to shape the product — features, pricing, target user.',
@@ -152,6 +158,8 @@ const PLATFORMS: Platform[] = [
       {
         name: 'Founder Studio site', status: 'Live', statusTone: 'good',
         url: 'https://www.shoppersspotllc.com/',
+        createdBy: 'Shogo AI',
+        createdOn: 'Oct 2026',
         playbook: {
           whereNow: 'Live at www.shoppersspotllc.com. Founder Studio → secret code → ForgeOS journey in flight.',
           whatsStopping: 'Nothing blocking — site is live. Next: drive traffic to it.',
@@ -180,6 +188,8 @@ const PLATFORMS: Platform[] = [
       {
         name: 'Soulmate Sketch review', status: 'Ready to publish', statusTone: 'warn',
         url: 'https://guides.shoppersspotllc.com/',
+        createdBy: 'Analyst',
+        createdOn: 'Oct 2026',
         playbook: {
           whereNow: 'Experiment #1 complete. HopLinks verified, compliance 11/11 PASS. Not published.',
           whatsStopping: 'Waiting on your "publish" approval. Content is done — it just needs your go-ahead.',
@@ -193,20 +203,13 @@ const PLATFORMS: Platform[] = [
       },
       {
         name: 'ClickBank', status: 'Contract accepted', statusTone: 'good',
+        createdBy: 'Muse',
+        createdOn: 'Oct 2026',
         playbook: {
           whereNow: 'Nickname + vendor ID configured as Vercel secrets. HopLink format verified.',
           whatsStopping: 'Nothing — ready. It earns when the Soulmate review publishes and gets traffic.',
           whatToDo: ['Publish the review', 'Drive traffic', 'Watch for first commission'],
           resolution: 'Tied to the Soulmate publish — same "go" unlocks it.',
-        },
-      },
-      {
-        name: 'Deel / beehiiv / Kit / Amazon', status: 'Queued', statusTone: 'idle',
-        playbook: {
-          whereNow: 'Applications submitted or queued. No action needed yet.',
-          whatsStopping: 'Waiting on platform approvals — outside our control.',
-          whatToDo: ['Monitor application statuses', 'Start with ClickBank (already accepted)'],
-          resolution: 'No action — focus energy on the ClickBank funnel first.',
         },
       },
     ],
@@ -226,6 +229,8 @@ const PLATFORMS: Platform[] = [
     projects: [
       {
         name: 'Strategy research', status: 'Complete — no edge found', statusTone: 'idle',
+        createdBy: 'Analyst',
+        createdOn: 'Oct 2026',
         playbook: {
           whereNow: '5 strategy families tested across 534 daily candles, walk-forward validated.',
           whatsStopping: 'No defensible edge found. Honest result — no fake strategy deployed.',
@@ -239,6 +244,8 @@ const PLATFORMS: Platform[] = [
       },
       {
         name: 'Paper trading', status: 'Not operational', statusTone: 'idle',
+        createdBy: 'Muse',
+        createdOn: '—',
         playbook: {
           whereNow: 'Infrastructure ready. Not started — blocked on strategy.',
           whatsStopping: 'Paper trading a strategy with no edge teaches nothing.',
@@ -248,6 +255,8 @@ const PLATFORMS: Platform[] = [
       },
       {
         name: 'Live trading', status: 'Disabled', statusTone: 'bad',
+        createdBy: 'Muse',
+        createdOn: '—',
         playbook: {
           whereNow: '$0 at risk. $20 hard cap enforced in code. Live execution disabled.',
           whatsStopping: 'Requires: viable strategy + paper validation + risk cert + your explicit authorization.',
@@ -416,6 +425,15 @@ function ProjectCard({ platform, project }: { platform: Platform; project: Proje
         </span>
       </div>
 
+      {/* Creator info */}
+      <div className="flex items-center gap-2 mb-3 text-xs" style={{ color: 'var(--text-muted)' }}>
+        <User className="h-3.5 w-3.5" />
+        <span>Created by <strong style={{ color: 'var(--text-secondary)' }}>{project.createdBy}</strong></span>
+        {project.createdOn && project.createdOn !== '—' && (
+          <><span>·</span><span>{project.createdOn}</span></>
+        )}
+      </div>
+
       {/* No live site notice */}
       {showNoSite && !project.url && (
         <div className="mb-3 p-3 rounded-xl text-sm" style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
@@ -545,6 +563,36 @@ function PlatformDetail({ platform, onBack }: { platform: Platform; onBack: () =
           ))}
         </div>
       </GlassPanel>
+
+      {/* Credit panel (platforms with credit systems, e.g. PinDrop) */}
+      {platform.credits && (
+        <GlassPanel glow={platform.color} className="mb-6">
+          <h3 className="text-sm font-extrabold uppercase tracking-widest mb-4 flex items-center gap-2" style={{ color: 'var(--text)' }}>
+            <Zap className="h-4 w-4" style={{ color: platform.color }} /> Credit balance
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="p-3 rounded-xl text-center" style={{ background: '#10b98112', border: '1px solid #10b98133' }}>
+              <p className="text-2xl font-extrabold" style={{ color: '#10b981' }}>{platform.credits.available.toLocaleString()}</p>
+              <p className="text-xs uppercase tracking-widest font-semibold mt-1" style={{ color: 'var(--text-muted)' }}>Available</p>
+            </div>
+            <div className="p-3 rounded-xl text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <p className="text-2xl font-extrabold" style={{ color: 'var(--text)' }}>{platform.credits.used.toLocaleString()}</p>
+              <p className="text-xs uppercase tracking-widest font-semibold mt-1" style={{ color: 'var(--text-muted)' }}>Used</p>
+            </div>
+            <div className="p-3 rounded-xl text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <p className="text-2xl font-extrabold" style={{ color: 'var(--text)' }}>{platform.projects.length}</p>
+              <p className="text-xs uppercase tracking-widest font-semibold mt-1" style={{ color: 'var(--text-muted)' }}>Projects created</p>
+            </div>
+            <div className="p-3 rounded-xl text-center" style={{ background: `${platform.color}12`, border: `1px solid ${platform.color}33` }}>
+              <p className="text-2xl font-extrabold" style={{ color: platform.color }}>{daysUntilRefresh(platform.credits.refreshDay)}</p>
+              <p className="text-xs uppercase tracking-widest font-semibold mt-1" style={{ color: 'var(--text-muted)' }}>Days to refresh</p>
+            </div>
+          </div>
+          <p className="text-xs mt-3" style={{ color: 'var(--text-muted)' }}>
+            {platform.credits.total.toLocaleString()} credits refresh on the {platform.credits.refreshDay}th of every month.
+          </p>
+        </GlassPanel>
+      )}
 
       {/* Projects with revenue playbooks */}
       <h3 className="text-lg font-extrabold mb-3 flex items-center gap-2" style={{ color: 'var(--text)' }}>
