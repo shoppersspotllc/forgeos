@@ -15,10 +15,12 @@ interface Mission {
   id: string;
   instruction: string;
   platform: string;
-  status: 'queued' | 'running' | 'done' | 'failed' | 'needs_approval';
+  status: 'needs_approval' | 'approved' | 'queued' | 'running' | 'done' | 'failed' | 'stopped';
   plan?: string;
   result?: string;
   parsed?: { niche: string; location: string; count: number };
+  creditsEstimated?: number;
+  creditsUsed?: number;
   createdAt: string;
 }
 
@@ -80,11 +82,14 @@ export async function POST(req: NextRequest) {
       id: `m-${Date.now().toString(36)}`,
       instruction,
       platform,
-      status: 'queued',
+      status: 'needs_approval',
       parsed,
+      creditsEstimated: estimatedCredits,
+      creditsUsed: 0,
       plan: `Plan: Research ${parsed.count} ${parsed.niche} prospects ${parsed.location === 'near you' ? 'near you' : 'in ' + parsed.location}, ` +
             `build professional websites (template-based, ~${estimatedCredits} credits total), ` +
-            `deploy live, report URLs and status here.`,
+            `deploy live, report URLs and status here. ` +
+            `REQUIRES YOUR APPROVAL before any credits are used or platforms are accessed.`,
       createdAt: new Date().toISOString(),
     };
 
@@ -109,7 +114,8 @@ export async function PATCH(req: NextRequest) {
     const status = String(body.status || '');
     const result = body.result ? String(body.result) : undefined;
 
-    if (!id || !['queued', 'running', 'done', 'failed'].includes(status)) {
+    const validStatuses = ['needs_approval', 'approved', 'queued', 'running', 'done', 'failed', 'stopped'];
+    if (!id || !validStatuses.includes(status)) {
       return NextResponse.json({ error: 'id and valid status required' }, { status: 400 });
     }
 
@@ -118,8 +124,18 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'mission not found' }, { status: 404 });
     }
 
+    // SAFETY: once stopped, a mission can never be restarted — prevents
+    // accidental credit spend on a killed mission.
+    if (mission.status === 'stopped' && status !== 'stopped') {
+      return NextResponse.json(
+        { error: 'Stopped missions cannot be restarted. Create a new mission.' },
+        { status: 400 }
+      );
+    }
+
     mission.status = status as Mission['status'];
     if (result) mission.result = result;
+    if (body.creditsUsed !== undefined) mission.creditsUsed = Number(body.creditsUsed) || 0;
 
     return NextResponse.json(mission);
   } catch {

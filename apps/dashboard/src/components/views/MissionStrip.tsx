@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { GlassPanel } from '@/components/design-system';
-import { Send, Sparkles, Loader2, CheckCircle2, AlertCircle, Bot } from 'lucide-react';
+import { Send, Sparkles, Loader2, CheckCircle2, AlertCircle, Bot, Square, ShieldCheck } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
 /*  Mission Command Strip — instruct Muse/MyDots to build autonomously */
@@ -12,9 +12,11 @@ interface Mission {
   id: string;
   instruction: string;
   platform: string;
-  status: 'queued' | 'running' | 'done' | 'failed' | 'needs_approval';
+  status: 'needs_approval' | 'approved' | 'queued' | 'running' | 'done' | 'failed' | 'stopped';
   plan?: string;
   result?: string;
+  creditsEstimated?: number;
+  creditsUsed?: number;
   createdAt: string;
 }
 
@@ -65,17 +67,39 @@ export function MissionStrip({ platformId, platformName, platformColor }: {
   const statusIcon = (s: Mission['status']) => {
     if (s === 'done') return <CheckCircle2 className="h-4 w-4" style={{ color: '#10b981' }} />;
     if (s === 'failed') return <AlertCircle className="h-4 w-4" style={{ color: '#ef4444' }} />;
-    if (s === 'running' || s === 'queued') return <Loader2 className="h-4 w-4 animate-spin" style={{ color: platformColor }} />;
-    return <Bot className="h-4 w-4" style={{ color: '#f59e0b' }} />;
+    if (s === 'stopped') return <Square className="h-4 w-4" style={{ color: '#ef4444' }} />;
+    if (s === 'running' || s === 'queued' || s === 'approved') return <Loader2 className="h-4 w-4 animate-spin" style={{ color: platformColor }} />;
+    return <ShieldCheck className="h-4 w-4" style={{ color: '#f59e0b' }} />;
   };
 
   const statusLabel = (s: Mission['status']) => {
+    if (s === 'needs_approval') return 'Waiting for your approval — 0 credits used';
+    if (s === 'approved') return 'Approved — starting execution';
     if (s === 'queued') return 'Queued — Muse is picking this up';
     if (s === 'running') return 'Running — Dots are executing';
     if (s === 'done') return 'Done';
     if (s === 'failed') return 'Failed';
-    return 'Needs your approval';
+    return 'Stopped — 0 credits used';
   };
+
+  const updateStatus = async (id: string, status: Mission['status']) => {
+    try {
+      const res = await fetch('/api/young-money/missions', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      const updated = await res.json();
+      if (!updated.error) {
+        setMissions((prev) => prev.map((m) => (m.id === id ? updated : m)));
+      }
+    } catch {
+      // ignore — status will refresh on next load
+    }
+  };
+
+  const canStop = (s: Mission['status']) =>
+    ['needs_approval', 'approved', 'queued', 'running'].includes(s);
 
   return (
     <GlassPanel glow={platformColor} className="mb-6">
@@ -87,7 +111,9 @@ export function MissionStrip({ platformId, platformName, platformColor }: {
       </div>
       <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
         Type an instruction — Muse and the Dots will research, build with minimum credits,
-        deploy professionally, and report live status here. No human steps needed after you send.
+        deploy professionally, and report live status here.{' '}
+        <strong style={{ color: '#f59e0b' }}>Nothing runs until you approve.</strong>{' '}
+        The red <strong>Stop</strong> button kills any mission instantly — zero credits used.
       </p>
 
       {/* Template chips */}
@@ -133,11 +159,45 @@ export function MissionStrip({ platformId, platformName, platformColor }: {
                  style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
               <div className="flex items-center gap-2 mb-1">
                 {statusIcon(m.status)}
-                <span className="font-semibold" style={{ color: 'var(--text)' }}>{m.instruction}</span>
+                <span className="font-semibold flex-1" style={{ color: 'var(--text)' }}>{m.instruction}</span>
+                {/* Stop switch — always available while mission is active */}
+                {canStop(m.status) && (
+                  <button
+                    onClick={() => updateStatus(m.id, 'stopped')}
+                    title="Stop immediately — no credits will be used"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:opacity-80"
+                    style={{ background: '#ef4444', color: '#fff', border: 'none', cursor: 'pointer' }}>
+                    <Square className="h-3.5 w-3.5" /> Stop
+                  </button>
+                )}
               </div>
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{statusLabel(m.status)}</p>
               {m.plan && <p className="text-xs mt-1.5" style={{ color: 'var(--text-secondary)' }}>{m.plan}</p>}
+              {m.creditsEstimated !== undefined && (
+                <p className="text-xs mt-1 font-semibold" style={{ color: '#f59e0b' }}>
+                  Estimated: ~{m.creditsEstimated} credits · Used so far: {m.creditsUsed || 0}
+                </p>
+              )}
               {m.result && <p className="text-xs mt-1.5 font-semibold" style={{ color: 'var(--text)' }}>{m.result}</p>}
+
+              {/* Approval gate — explicit approve before any credits or platform access */}
+              {m.status === 'needs_approval' && (
+                <div className="mt-3 p-3 rounded-xl" style={{ background: '#f59e0b0d', border: '1px solid #f59e0b44' }}>
+                  <p className="text-xs font-bold mb-1 flex items-center gap-1.5" style={{ color: '#f59e0b' }}>
+                    <ShieldCheck className="h-4 w-4" /> Approval required
+                  </p>
+                  <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
+                    Nothing has been built. No credits used. No platforms accessed.
+                    Approving lets Muse + Dots use ~{m.creditsEstimated} credits and access {platformName} to build &amp; deploy.
+                  </p>
+                  <button
+                    onClick={() => updateStatus(m.id, 'approved')}
+                    className="px-4 py-2 rounded-xl text-xs font-bold transition-all hover:opacity-90"
+                    style={{ background: `linear-gradient(135deg, ${platformColor}, ${platformColor}cc)`, color: '#fff', border: 'none', cursor: 'pointer' }}>
+                    Approve &amp; Execute
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
