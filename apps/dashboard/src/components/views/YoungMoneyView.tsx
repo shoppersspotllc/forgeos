@@ -9,7 +9,7 @@ import {
   DollarSign, Target, Link2, TrendingUp,
   ChevronRight, AlertTriangle, CheckCircle2, Clock,
   Rocket, Sparkles, Bot, ArrowLeft,
-  CalendarDays, Flag, ExternalLink, PlayCircle, Wrench,
+  CalendarDays, Flag, ExternalLink, PlayCircle, Wrench, MousePointerClick,
   ShieldCheck, Megaphone, FlaskConical, Code2, Handshake,
 } from 'lucide-react';
 
@@ -364,6 +364,7 @@ interface FixState {
 
 function ProjectCard({ platform, project }: { platform: Platform; project: Project }) {
   const [fix, setFix] = useState<FixState>({ loading: false, result: null });
+  const [showNoSite, setShowNoSite] = useState(false);
 
   const handleFix = async () => {
     setFix({ loading: true, result: null });
@@ -397,18 +398,31 @@ function ProjectCard({ platform, project }: { platform: Platform; project: Proje
       <div className="flex items-center justify-between gap-2 mb-3">
         {project.url ? (
           <a href={project.url} target="_blank" rel="noopener noreferrer"
-             className="font-bold text-base flex items-center gap-1.5 hover:opacity-80"
+             className="font-bold text-base flex items-center gap-1.5 hover:opacity-80 cursor-pointer"
              style={{ color: 'var(--text)', textDecoration: 'none' }}>
             {project.name} <ExternalLink className="h-4 w-4" style={{ color: 'var(--accent)' }} />
           </a>
         ) : (
-          <p className="font-bold text-base" style={{ color: 'var(--text)' }}>{project.name}</p>
+          <button
+            onClick={() => setShowNoSite(!showNoSite)}
+            className="font-bold text-base flex items-center gap-1.5 hover:opacity-80 cursor-pointer"
+            style={{ color: 'var(--text)', background: 'none', border: 'none', padding: 0, textAlign: 'left' }}>
+            {project.name} <MousePointerClick className="h-4 w-4" style={{ color: 'var(--accent)' }} />
+          </button>
         )}
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap"
               style={{ background: `${toneColor(project.statusTone)}22`, color: toneColor(project.statusTone) }}>
           {project.status}
         </span>
       </div>
+
+      {/* No live site notice */}
+      {showNoSite && !project.url && (
+        <div className="mb-3 p-3 rounded-xl text-sm" style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+          <p className="font-semibold mb-1" style={{ color: 'var(--text)' }}>No live site yet</p>
+          <p className="text-xs">{project.name} is a prospect, not a published project — so there's nothing to open. Use <strong>Fix &amp; Deploy</strong> below to move it toward revenue.</p>
+        </div>
+      )}
 
       <div className="grid md:grid-cols-2 gap-3">
         <div className="p-3 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
