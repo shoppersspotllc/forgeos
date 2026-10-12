@@ -110,6 +110,7 @@ const PLATFORMS: Platform[] = [
       { dot: 'Craftsman', function: 'Development', doing: 'Built & published Delco Air site' },
       { dot: 'Shepherd', function: 'Marketing', doing: 'Standing by for follow-up sequences' },
       { dot: 'Closer', function: 'Sales', doing: 'Ready with $299/$39 pricing playbook when a prospect bites' },
+      { dot: 'Muse', function: 'Safety', doing: 'Enforces the safety rule: no outreach sent without your explicit approval' },
     ],
   },
   {
