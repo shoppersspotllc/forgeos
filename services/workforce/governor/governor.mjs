@@ -25,7 +25,10 @@ const GOVERNOR_ACTOR = { type: 'governor', id: 'governor' };
 
 // Dots onboarded for Governor dispatch in this increment. Anything else
 // is rejected server-side (never trust the UI's dot list).
-const ONBOARDED_DOTS = new Set(['scout']);
+// 2026-10-12: Analyst onboarded — skill bundle verified via ForgeOS AI gateway.
+// 2026-10-12: Craftsman, Hunter, Shepherd, Closer onboarded — Dexter approved batch.
+// 2026-10-12: MediaPilot onboarded — YouTube/media Dot for Shopper's Spot 24x7 ForgeOS Studio.
+const ONBOARDED_DOTS = new Set(['scout', 'analyst', 'craftsman', 'hunter', 'shepherd', 'closer', 'mediapilot']);
 
 function newTaskId() {
   return `gov_${Date.now()}_${randomBytes(4).toString('hex')}`;
