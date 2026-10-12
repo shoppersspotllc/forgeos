@@ -15,6 +15,7 @@ import { GitHubView } from '@/components/views/GitHubView';
 import { TerminalView } from '@/components/views/TerminalView';
 import { LocalTerminal } from '@/components/views/LocalTerminal';
 import { GodsEyeView } from '@/components/views/GodsEyeView';
+import { ShogoView } from '@/components/views/ShogoView';
 import { PositionAIView } from '@/components/views/PositionAIView';
 import { ChromeView } from '@/components/views/ChromeView';
 import { MediaEngineView } from '@/components/views/MediaEngineView';
@@ -66,6 +67,7 @@ export default function Home() {
       case 'canva': return <CanvaView />;
       case 'youngmoney': return <YoungMoneyView />;
       case 'godseye': return <GodsEyeView />;
+      case 'shogo': return <ShogoView />;
       case 'positionai': return <PositionAIView />;
       case 'forgeai': return <ForgeAIView />;
       case 'mediaengine': return <MediaEngineView />;

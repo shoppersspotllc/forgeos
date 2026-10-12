@@ -2,11 +2,11 @@
 
 import { 
   Terminal, Users, Globe, DollarSign, Eye, 
-  Crosshair, Sparkles, HeartPulse, Code2, Cpu, Palette, GitBranch, Zap, Menu, X, Briefcase
+  Crosshair, Sparkles, HeartPulse, Code2, Cpu, Palette, GitBranch, Zap, Menu, X, Briefcase, AppWindow
 } from 'lucide-react';
 
 export type View = 
-  | 'command' | 'youngmoney' | 'godseye' | 'positionai' | 'mydots'
+  | 'command' | 'youngmoney' | 'godseye' | 'shogo' | 'positionai' | 'mydots'
   | 'chrome' | 'github' | 'opencode' | 'claude' | 'colibri'
   | 'canva' | 'forgeai' | 'health' | 'mediaengine' | 'tasks' | 'workforce';
 
@@ -14,6 +14,7 @@ const primaryItems = [
   { id: 'command' as View, label: 'Forge Dashboard', icon: Terminal },
   { id: 'youngmoney' as View, label: 'Young Money', icon: DollarSign },
   { id: 'godseye' as View, label: "God's Eye", icon: Eye },
+  { id: 'shogo' as View, label: 'Shogo Studio', icon: AppWindow },
   { id: 'positionai' as View, label: 'Position AI', icon: Crosshair },
   { id: 'mydots' as View, label: 'My Dots', icon: Users },
   { id: 'workforce' as View, label: 'Workforce', icon: Briefcase },
