@@ -12,7 +12,6 @@ import {
   CalendarDays, Flag, ExternalLink, PlayCircle, Wrench, MousePointerClick, User, Zap,
   ShieldCheck, Megaphone, FlaskConical, Code2, Handshake,
 } from 'lucide-react';
-import { MissionStrip } from './MissionStrip';
 
 /* ------------------------------------------------------------------ */
 /*  Data — honest state, no fabrication                               */
@@ -42,9 +41,25 @@ interface Project {
 
 interface DotAssignment {
   dot: string;
+  emoji?: string; // resolved via DOT_EMOJI lookup — actual OpenDots avatar
   function: string; // sales, marketing, research, development, safety
   doing: string;
+  intro: string; // first-person introduction
+  expertise: string[];
+  preparedness: string; // how ready they are
+  canDo: string; // what they can do for this platform's projects
 }
+
+/* Actual OpenDots avatars — preserved across the dashboard */
+const DOT_EMOJI: Record<string, string> = {
+  'Muse': '🤖',
+  'Scout': '🔍',
+  'Analyst': '📊',
+  'Craftsman': '🔨',
+  'Hunter': '🎯',
+  'Shepherd': '🐑',
+  'Closer': '💰',
+};
 
 interface Platform {
   id: PlatformId;
@@ -112,12 +127,54 @@ const PLATFORMS: Platform[] = [
       },
     ],
     dots: [
-      { dot: 'Scout', function: 'Research', doing: 'Verified all 7 prospects, scored 52–75/75' },
-      { dot: 'Hunter', function: 'Sales', doing: 'Drafted 4 outreach emails — held, awaiting your channel decision' },
-      { dot: 'Craftsman', function: 'Development', doing: 'Built & published Delco Air site' },
-      { dot: 'Shepherd', function: 'Marketing', doing: 'Standing by for follow-up sequences' },
-      { dot: 'Closer', function: 'Sales', doing: 'Ready with $299/$39 pricing playbook when a prospect bites' },
-      { dot: 'Muse', function: 'Safety', doing: 'Enforces the safety rule: no outreach sent without your explicit approval' },
+      {
+        dot: 'Scout', function: 'Research',
+        doing: 'Verified all 7 prospects, scored 52–75/75',
+        intro: "I'm Scout — your eyes on the market. I find real businesses, verify they're legit, and score them so you only chase winners.",
+        expertise: ['Prospect research', 'Verification', 'Lead scoring', 'Market intel'],
+        preparedness: 'Ready — research systems hot',
+        canDo: 'I can find 10 new verified prospects for any niche and location you name, scored and ranked, within hours.',
+      },
+      {
+        dot: 'Hunter', function: 'Sales',
+        doing: 'Drafted 4 outreach emails — held, awaiting your channel decision',
+        intro: "I'm Hunter — I start conversations that turn into customers. I write outreach that gets opened, read, and replied to.",
+        expertise: ['Cold outreach', 'Email copy', 'Follow-up sequences', 'Objection handling'],
+        preparedness: 'Ready — 4 drafts written, waiting on your go',
+        canDo: 'I can launch outreach to any prospect list the moment you approve the channel — email or phone, your call.',
+      },
+      {
+        dot: 'Craftsman', function: 'Development',
+        doing: 'Built & published Delco Air site',
+        intro: "I'm Craftsman — I build the websites that sell. Professional, fast, mobile-perfect. I built Delco Air live.",
+        expertise: ['Website builds', 'PinDrop platform', 'Mobile optimization', 'Fast deployment'],
+        preparedness: 'Ready — Delco Air proves the pipeline works',
+        canDo: 'I can build a professional site for any business in under a day, using minimal credits via proven templates.',
+      },
+      {
+        dot: 'Shepherd', function: 'Marketing',
+        doing: 'Standing by for follow-up sequences',
+        intro: "I'm Shepherd — I nurture relationships so no lead goes cold. Follow-ups are where deals are won, and that's my territory.",
+        expertise: ['Follow-up sequences', 'Relationship nurturing', 'Re-engagement', 'Trust building'],
+        preparedness: 'Standing by — sequences drafted, ready to deploy',
+        canDo: 'I can run automated follow-up sequences for every prospect — 3, 7, and 14-day touches that keep you top of mind.',
+      },
+      {
+        dot: 'Closer', function: 'Sales',
+        doing: 'Ready with $299/$39 pricing playbook when a prospect bites',
+        intro: "I'm Closer — I turn interested prospects into paying customers. When someone bites, I know exactly what to say.",
+        expertise: ['Deal closing', 'Pricing strategy', 'Proposal writing', 'Negotiation'],
+        preparedness: 'Ready — $299/$39 playbook locked and loaded',
+        canDo: 'When a prospect shows interest, I take over with the pricing playbook and close the $299 setup + $39/mo deal.',
+      },
+      {
+        dot: 'Muse', function: 'Safety',
+        doing: 'Enforces the safety rule: no outreach sent without your explicit approval',
+        intro: "I'm Muse — I run this entire operation. I assign work, verify results, protect your credits, and make sure nothing moves without your word.",
+        expertise: ['Executive command', 'Quality control', 'Credit protection', 'Team coordination'],
+        preparedness: 'Online — commanding this dashboard right now',
+        canDo: 'I coordinate all Dots, enforce your approval gates, and report honest status. Nothing happens without your approval.',
+      },
     ],
   },
   {
@@ -180,8 +237,22 @@ const PLATFORMS: Platform[] = [
       },
     ],
     dots: [
-      { dot: 'Craftsman', function: 'Development', doing: 'Supports Shogo builds with technical review' },
-      { dot: 'Muse', function: 'Research', doing: 'Tracks build progress, reports blockers to you' },
+      {
+        dot: 'Craftsman', function: 'Development',
+        doing: 'Supports Shogo builds with technical review',
+        intro: "I'm Craftsman — I make sure what Shogo builds is solid. I review the technical work and catch issues before they become problems.",
+        expertise: ['Technical review', 'App architecture', 'Code quality', 'Shogo platform'],
+        preparedness: 'Ready — monitoring all active builds',
+        canDo: 'I can review any Shogo build for quality, suggest improvements, and help unblock technical issues.',
+      },
+      {
+        dot: 'Muse', function: 'Research',
+        doing: 'Tracks build progress, reports blockers to you',
+        intro: "I'm Muse — I keep your Shogo projects on track. I monitor build progress, flag blockers, and make sure nothing stalls silently.",
+        expertise: ['Progress tracking', 'Blocker identification', 'Build coordination', 'Status reporting'],
+        preparedness: 'Online — tracking BidReady AI and QuickBill now',
+        canDo: 'I track every build task, alert you the moment something needs your input, and keep the momentum going.',
+      },
     ],
   },
   {
@@ -223,9 +294,30 @@ const PLATFORMS: Platform[] = [
       },
     ],
     dots: [
-      { dot: 'Analyst', function: 'Marketing', doing: 'Wrote the review, verified HopLinks, passed compliance 11/11' },
-      { dot: 'Scout', function: 'Research', doing: 'Researched the Soulmate Sketch offer and angle' },
-      { dot: 'Muse', function: 'Safety', doing: 'Enforces compliance-first rule: value content, no link spam' },
+      {
+        dot: 'Analyst', function: 'Marketing',
+        doing: 'Wrote the review, verified HopLinks, passed compliance 11/11',
+        intro: "I'm Analyst — I create content that earns. I wrote the Soulmate Sketch review, verified every link, and passed compliance 11/11.",
+        expertise: ['Content writing', 'Affiliate compliance', 'HopLink verification', 'SEO'],
+        preparedness: 'Ready — review written, links verified',
+        canDo: 'I can write the next review, verify all tracking links, and ensure every piece passes compliance before it publishes.',
+      },
+      {
+        dot: 'Scout', function: 'Research',
+        doing: 'Researched the Soulmate Sketch offer and angle',
+        intro: "I'm Scout — I find the offers worth promoting. I research affiliate programs, check their reputation, and find the winning angle.",
+        expertise: ['Offer research', 'Niche analysis', 'Competitor intel', 'Trend spotting'],
+        preparedness: 'Ready — scanning for the next winning offer',
+        canDo: 'I can research 5 new affiliate offers in any niche, vet them for legitimacy, and recommend the best one to promote next.',
+      },
+      {
+        dot: 'Muse', function: 'Safety',
+        doing: 'Enforces compliance-first rule: value content, no link spam',
+        intro: "I'm Muse — I protect your reputation. Every affiliate piece passes my compliance check: real value first, no spam, no shortcuts.",
+        expertise: ['Compliance enforcement', 'Quality control', 'Brand protection', 'Risk management'],
+        preparedness: 'Online — guarding every publish',
+        canDo: 'I review every affiliate post before it goes live. If it does not genuinely help the reader, it does not publish.',
+      },
     ],
   },
   {
@@ -275,8 +367,22 @@ const PLATFORMS: Platform[] = [
       },
     ],
     dots: [
-      { dot: 'Analyst', function: 'Research', doing: 'Ran the 5-family backtest honestly — reported no edge' },
-      { dot: 'Muse', function: 'Safety', doing: 'Enforces $20 cap, gate sequence, no-auto-enable rule' },
+      {
+        dot: 'Analyst', function: 'Research',
+        doing: 'Ran the 5-family backtest honestly — reported no edge',
+        intro: "I'm Analyst — I test trading ideas with brutal honesty. I ran 5 strategy families across 534 candles and told you the truth: no edge found.",
+        expertise: ['Backtesting', 'Statistical analysis', 'Strategy validation', 'Risk modeling'],
+        preparedness: 'Ready — research framework built and proven',
+        canDo: 'I can test any new trading hypothesis with proper walk-forward validation and give you an honest verdict — no false hope.',
+      },
+      {
+        dot: 'Muse', function: 'Safety',
+        doing: 'Enforces $20 cap, gate sequence, no-auto-enable rule',
+        intro: "I'm Muse — I guard your capital like it's my own. The $20 cap is hard-coded, live trading stays off until every gate passes, and I never bend.",
+        expertise: ['Risk enforcement', 'Capital protection', 'Gate management', 'Kill switches'],
+        preparedness: 'Online — all safety systems armed',
+        canDo: 'I enforce every safety rule without exception. No strategy goes live without passing validation, paper trading, and your explicit approval.',
+      },
     ],
   },
 ];
@@ -615,13 +721,57 @@ function PlatformDetail({ platform, onBack }: { platform: Platform; onBack: () =
         </GlassPanel>
       )}
 
-      {/* Mission Command Strip — instruct Muse/MyDots to build */}
-      <MissionStrip
-        platformId={platform.id}
-        platformName={platform.name}
-        platformColor={platform.color}
-        platformUrl={platform.dashboardUrl}
-      />
+      {/* Meet the Dots — first-person introductions */}
+      <h3 className="text-lg font-extrabold mb-1 flex items-center gap-2" style={{ color: 'var(--text)' }}>
+        <Bot className="h-5 w-5" style={{ color: platform.color }} /> Meet your team
+      </h3>
+      <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
+        The Dots working on {platform.name} — in their own words.
+      </p>
+      <div className="grid md:grid-cols-2 gap-4 mb-8">
+        {platform.dots.map((d) => {
+          const FIcon = FUNCTION_ICONS[d.function] || Bot;
+          return (
+            <GlassPanel key={d.dot} glow={platform.color}>
+              <div className="flex items-center gap-3 mb-3">
+                <BotAvatar name={d.dot} emoji={DOT_EMOJI[d.dot] || '🤖'} size={48} status="online" />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-extrabold text-base" style={{ color: 'var(--text)' }}>{d.dot}</p>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                          style={{ background: `${platform.color}22`, color: platform.color }}>
+                      {d.function}
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold mt-0.5" style={{ color: '#10b981' }}>
+                    ● {d.preparedness}
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-sm italic mb-3 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                "{d.intro}"
+              </p>
+
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {d.expertise.map((e) => (
+                  <span key={e} className="text-xs px-2 py-1 rounded-lg font-medium"
+                        style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+                    {e}
+                  </span>
+                ))}
+              </div>
+
+              <div className="p-3 rounded-xl" style={{ background: `${platform.color}0d`, border: `1px solid ${platform.color}33` }}>
+                <p className="text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1" style={{ color: platform.color }}>
+                  <FIcon className="h-3.5 w-3.5" /> What I can do for {platform.name}
+                </p>
+                <p className="text-sm" style={{ color: 'var(--text)' }}>{d.canDo}</p>
+              </div>
+            </GlassPanel>
+          );
+        })}
+      </div>
 
       {/* Projects with revenue playbooks */}
       <h3 className="text-lg font-extrabold mb-3 flex items-center gap-2" style={{ color: 'var(--text)' }}>
@@ -633,28 +783,6 @@ function PlatformDetail({ platform, onBack }: { platform: Platform; onBack: () =
         ))}
       </div>
 
-      {/* Dots on this platform */}
-      <h3 className="text-lg font-extrabold mb-3 flex items-center gap-2" style={{ color: 'var(--text)' }}>
-        <Bot className="h-5 w-5" style={{ color: platform.color }} /> Dots on {platform.name}
-      </h3>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {platform.dots.map((d) => {
-          const FIcon = FUNCTION_ICONS[d.function] || Bot;
-          return (
-            <GlassPanel key={d.dot} padding="p-4" hover>
-              <div className="flex items-center gap-2 mb-1.5">
-                <FIcon className="h-4 w-4" style={{ color: platform.color }} />
-                <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>{d.dot}</p>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full ml-auto"
-                      style={{ background: `${platform.color}22`, color: platform.color }}>
-                  {d.function}
-                </span>
-              </div>
-              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{d.doing}</p>
-            </GlassPanel>
-          );
-        })}
-      </div>
     </FadeUp>
   );
 }
@@ -679,7 +807,7 @@ function DotsSection() {
       <FadeUp>
         <GlassPanel glow="#f59e0b" className="mb-4">
           <div className="flex items-center gap-4">
-            <BotAvatar name={main.name} emoji="🤖" size={56} status="online" />
+            <BotAvatar name={main.name} emoji={DOT_EMOJI[main.name] || '🤖'} size={56} status="online" />
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-extrabold text-lg" style={{ color: 'var(--text)' }}>{main.name}</p>
@@ -700,7 +828,7 @@ function DotsSection() {
           <FadeUp key={d.name} delay={i * 60}>
             <GlassPanel hover padding="p-4">
               <div className="flex items-center gap-3 mb-2">
-                <BotAvatar name={d.name} emoji="🤖" size={40} status={d.status === 'Online' ? 'online' : d.status === 'Busy' ? 'busy' : 'unknown'} />
+                <BotAvatar name={d.name} emoji={DOT_EMOJI[d.name] || '🤖'} size={40} status={d.status === 'Online' ? 'online' : d.status === 'Busy' ? 'busy' : 'unknown'} />
                 <div className="flex-1">
                   <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>{d.name}</p>
                   <p className="text-xs" style={{ color: 'var(--accent)' }}>{d.role}</p>
