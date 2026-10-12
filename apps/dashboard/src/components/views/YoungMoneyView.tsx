@@ -53,6 +53,8 @@ interface Platform {
   icon: typeof Target;
   color: string;
   revenue: number;
+  dashboardUrl?: string; // main external dashboard for this platform
+  dashboardLabel?: string;
   projects: Project[];
   dots: DotAssignment[];
   credits?: {
@@ -83,6 +85,8 @@ const PLATFORMS: Platform[] = [
     icon: Target,
     color: '#f59e0b',
     revenue: 0,
+    dashboardUrl: 'https://pindrop.host/',
+    dashboardLabel: 'Open PinDrop Dashboard',
     credits: {
       total: 2000,
       available: 1750,
@@ -123,6 +127,8 @@ const PLATFORMS: Platform[] = [
     icon: Rocket,
     color: '#8b5cf6',
     revenue: 0,
+    dashboardUrl: 'https://studio.shogo.ai/',
+    dashboardLabel: 'Open Shogo Studio',
     projects: [
       {
         name: 'BidReady AI', status: 'Building — 1/7 tasks', statusTone: 'idle',
@@ -185,6 +191,8 @@ const PLATFORMS: Platform[] = [
     icon: Link2,
     color: '#10b981',
     revenue: 0,
+    dashboardUrl: 'https://accounts.clickbank.com/',
+    dashboardLabel: 'Open ClickBank Dashboard',
     projects: [
       {
         name: 'Soulmate Sketch review', status: 'Ready to publish', statusTone: 'warn',
@@ -546,10 +554,22 @@ function PlatformDetail({ platform, onBack }: { platform: Platform; onBack: () =
                style={{ background: `linear-gradient(135deg, ${platform.color}, ${platform.color}88)`, boxShadow: `0 8px 20px ${platform.color}44` }}>
             <Icon className="h-7 w-7 text-white" />
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="text-2xl font-extrabold" style={{ color: 'var(--text)' }}>{platform.name}</h2>
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{platform.tagline}</p>
           </div>
+          {platform.dashboardUrl ? (
+            <a href={platform.dashboardUrl} target="_blank" rel="noopener noreferrer"
+               className="px-5 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition-all hover:opacity-90 whitespace-nowrap"
+               style={{ background: `linear-gradient(135deg, ${platform.color}, ${platform.color}cc)`, color: '#fff', textDecoration: 'none' }}>
+              <ExternalLink className="h-4 w-4" />
+              {platform.dashboardLabel || `Open ${platform.name}`}
+            </a>
+          ) : (
+            <span className="text-xs font-semibold px-3 py-2 rounded-lg" style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+              Internal platform
+            </span>
+          )}
         </div>
         <div className="grid grid-cols-3 gap-3">
           {[
