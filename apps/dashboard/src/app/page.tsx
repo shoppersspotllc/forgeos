@@ -7,6 +7,7 @@ import { CanvaView } from '@/components/views/CanvaView';
 import { CommandView } from '@/components/views/CommandView';
 import { MyDotsView } from '@/components/views/MyDotsView';
 import { DotsChatView } from '@/components/views/DotsChatView';
+import DotsWorkspaceView from '@/components/views/dots/DotsWorkspaceView';
 // Workforce Command Center view
 import { WorkforceView } from '@/components/views/WorkforceView';
 import { TasksView } from '@/components/views/TasksView';
@@ -62,7 +63,7 @@ export default function Home() {
     switch (view) {
       case 'command': return <CommandView onNavigate={(v: string) => setView(v as View)} />;
       case 'mydots': return <MyDotsView onOpenDots={() => setView('dotschat')} />;
-      case 'dotschat': return <DotsChatView onBack={() => setView('mydots')} />;
+      case 'dotschat': return <DotsWorkspaceView />;
       case 'workforce': return <WorkforceView />;
       case 'tasks': return <TasksView />;
       case 'colibri': return <ColibriView />;
