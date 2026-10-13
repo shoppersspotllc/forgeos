@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { routeChat, getHealthData } from '@/lib/forgeos-ai/gateway-dual';
 
 /**
  * ForgeOS Task Chain — Minimal E2E Proof
@@ -6,12 +7,10 @@ import { NextRequest, NextResponse } from 'next/server';
  * Chain: USER → MUSE (router) → DOT → UI
  * Ruflo is NOT in this path (not installed, no integration code in baseline).
  *
- * Muse routing: deterministic keyword router designed by Muse.
+ * Muse routing: uses ForgeOS AI gateway (dual-mode: external :8788 or in-process).
  * Dot execution: real HTTP calls, real results, honest failures.
  * State: in-memory task store with full execution trace for observability.
  */
-
-const GATEWAY = process.env.FORGEOS_AI_ENDPOINT || 'http://127.0.0.1:8788';
 
 interface TaskTrace {
   ts: string;
@@ -46,50 +45,43 @@ function trace(task: Task, stage: string, detail: string) {
 async function museRoute(taskText: string, task: Task): Promise<{ dot: string; action: string; provider: string; model: string } | null> {
   trace(task, 'muse-routing', 'Muse: consulting ForgeOS AI gateway for routing decision');
 
-  const systemPrompt = `You are the Muse executive router for ForgeOS. Classify the user task.
+  const systemPrompt = `You are the Muse executive router for ForgeOS. Your ONLY job is to decide if a task belongs to one of two internal ForgeOS Dots, or to neither.
 
-RULES:
-1. Read the task carefully.
-2. Decide if it is about SYSTEM HEALTH/MONITORING or CAPABILITIES/DISCOVERY.
-3. If it is about anything else (cooking, weather, jokes, general chat, etc.), you MUST return {"dot": null}.
-4. Do NOT guess. Do NOT pick a dot for unrelated tasks.
+FORGEOS DOTS (internal platform only):
+- Monitor Dot: Reports on the ForgeOS platform itself — gateway health, provider status, uptime, system monitoring.
+- Scout Dot: Lists what the ForgeOS platform can do — platform features, capability list.
 
-Monitor Dot handles ONLY: health checks, status, providers, uptime, monitoring, system health.
-Scout Dot handles ONLY: capabilities list, features, what can you do, discovery.
+CRITICAL: These Dots know ONLY about the ForgeOS software platform. They do NOT know about the real world, businesses, locations, people, or general knowledge.
 
-Examples:
-- "check gateway health" → {"dot": "monitor", "action": "gateway-health"}
-- "what can you do" → {"dot": "scout", "action": "list-capabilities"}
-- "bake a cake" → {"dot": null}
-- "tell me a joke" → {"dot": null}
-- "what's the weather" → {"dot": null}
+REJECT (return {"dot": null}) if the task mentions:
+- Real-world places, addresses, ZIP codes, cities
+- Businesses, shops, restaurants, services
+- People, names, contact info
+- General knowledge questions, cooking, weather, jokes, chat
+- Anything NOT specifically about the ForgeOS platform's own status or features
+
+ACCEPT only if the task is clearly asking about the ForgeOS platform itself.
 
 Respond with ONLY the JSON object, nothing else.
 Task: "${taskText}"`;
 
   try {
-    const res = await fetch(`${GATEWAY}/v1/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(120000),
-      body: JSON.stringify({
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: taskText },
-        ],
-        model: 'llama3.2:1b',
-        temperature: 0.1,
-        max_tokens: 100,
-      }),
+    const result = await routeChat({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: taskText },
+      ],
+      model: 'llama3.2:1b',
+      temperature: 0.1,
+      max_tokens: 100,
     });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      trace(task, 'muse-routing', `Gateway returned ${res.status}: ${err.error || 'unknown'} — honest failure`);
+    if (!result.ok) {
+      trace(task, 'muse-routing', `Gateway returned ${result.status}: ${result.data.error || 'unknown'} — honest failure`);
       return null;
     }
 
-    const data = await res.json();
+    const data = result.data;
     const content = data.choices?.[0]?.message?.content?.trim() || '';
     const provider = data.forgeos?.provider || 'unknown';
     const model = data.model || 'unknown';
@@ -109,9 +101,33 @@ Task: "${taskText}"`;
       return null;
     }
 
-    if (decision.dot !== 'monitor' && decision.dot !== 'scout') {
+    // Normalize dot name: handle "Scout Dot", "scout", "SCOUT", etc.
+    const dotNorm = String(decision.dot).toLowerCase().replace(/\s+dot\s*/i, '').trim();
+    if (dotNorm !== 'monitor' && dotNorm !== 'scout') {
       trace(task, 'muse-routing', `AI returned unknown dot "${decision.dot}" — honest rejection`);
       return null;
+    }
+    // Use normalized name for downstream logic
+    decision.dot = dotNorm;
+    // Default action if AI didn't specify one (small models often omit it)
+    if (!decision.action) {
+      decision.action = dotNorm === 'monitor' ? 'gateway-health' : 'list-capabilities';
+      trace(task, 'muse-routing', `AI omitted action — defaulted to "${decision.action}" for ${dotNorm}`);
+    }
+
+    // Structural guardrail: validate the AI decision against task content.
+    // This catches small-model hallucinations where the AI routes out-of-domain
+    // tasks (e.g. real-world locations) to platform Dots. The AI still makes
+    // the primary decision; this only rejects clear contradictions.
+    if (decision.dot === 'scout' || decision.dot === 'monitor') {
+      // Scout/Monitor handle ONLY the ForgeOS platform. If the task contains
+      // real-world location indicators (ZIP codes, addresses), it's out of domain.
+      const hasZipCode = /\b\d{5}(-\d{4})?\b/.test(taskText);
+      const hasAddress = /\b(street|avenue|avenue|road|blvd|lane|drive|zip)\b/i.test(taskText);
+      if (hasZipCode || hasAddress) {
+        trace(task, 'muse-routing', 'Guardrail: task contains location indicators — out of domain for platform Dots, honest rejection');
+        return null;
+      }
     }
 
     trace(task, 'muse-routing', `AI routed to Dot "${decision.dot}" for action "${decision.action}"`);
@@ -129,10 +145,8 @@ Task: "${taskText}"`;
  */
 async function executeDot(dot: string, action: string, task: Task): Promise<unknown> {
   if (dot === 'monitor' && action === 'gateway-health') {
-    trace(task, 'dot-execute', 'Monitor Dot: GET ' + GATEWAY + '/health');
-    const res = await fetch(`${GATEWAY}/health`, { signal: AbortSignal.timeout(10000) });
-    if (!res.ok) throw new Error(`Gateway health returned ${res.status}`);
-    const data = await res.json();
+    trace(task, 'dot-execute', 'Monitor Dot: GET ForgeOS AI /health (dual-mode)');
+    const data = await getHealthData();
     trace(task, 'dot-result', `Gateway status: ${data.status}, providers: ${data.connected}/${data.providers}`);
     return { dot, action, gateway: data };
   }

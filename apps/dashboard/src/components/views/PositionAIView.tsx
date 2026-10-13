@@ -18,16 +18,13 @@ export function PositionAIView() {
     setError('');
     setResult(null);
     try {
-      const res = await fetch('/api/forgeos-ai/chat', {
+      // Calls Position AI's server-side API route, which authenticates to
+      // ForgeOS AI using Position AI's dedicated fk_ credential (server-side only).
+      // The browser never sees the credential and never calls ForgeOS AI directly.
+      const res = await fetch('/api/position-ai/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: 'You are Position AI, a strategic intelligence analyst for ForgeOS. Provide concise strategic positioning analysis.' },
-            { role: 'user', content: query },
-          ],
-          capability: 'chat',
-        }),
+        body: JSON.stringify({ query }),
         signal: AbortSignal.timeout(120000),
       });
       const data = await res.json();

@@ -6,6 +6,8 @@ import { ColibriView } from '@/components/views/ColibriView';
 import { CanvaView } from '@/components/views/CanvaView';
 import { CommandView } from '@/components/views/CommandView';
 import { MyDotsView } from '@/components/views/MyDotsView';
+// Workforce Command Center view
+import { WorkforceView } from '@/components/views/WorkforceView';
 import { TasksView } from '@/components/views/TasksView';
 import { ForgeAIView } from '@/components/views/ForgeAIView';
 import { YoungMoneyView } from '@/components/views/YoungMoneyView';
@@ -57,8 +59,9 @@ export default function Home() {
 
   const renderView = () => {
     switch (view) {
-      case 'command': return <CommandView />;
+      case 'command': return <CommandView onNavigate={(v: string) => setView(v as View)} />;
       case 'mydots': return <MyDotsView />;
+      case 'workforce': return <WorkforceView />;
       case 'tasks': return <TasksView />;
       case 'colibri': return <ColibriView />;
       case 'canva': return <CanvaView />;
@@ -73,7 +76,7 @@ export default function Home() {
       case 'claude': return <LocalTerminal worker="claude" sessionId="forgeos-claude" />;
       case 'chrome': return <ChromeView />;
       case 'github': return <GitHubView />;
-      default: return <CommandView />;
+      default: return <CommandView onNavigate={(v: string) => setView(v as View)} />;
     }
   };
 
