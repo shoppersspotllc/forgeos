@@ -61,7 +61,7 @@ export default function Home() {
   const renderView = () => {
     switch (view) {
       case 'command': return <CommandView onNavigate={(v: string) => setView(v as View)} />;
-      case 'mydots': return <MyDotsView onOpenDots={() => setView('opendots')} />;
+      case 'mydots': return <MyDotsView />;
       case 'opendots': return <OpenDotsPlatformView onBack={() => setView('mydots')} />;
       case 'workforce': return <WorkforceView />;
       case 'tasks': return <TasksView />;

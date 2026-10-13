@@ -6,9 +6,9 @@ import {
 } from '@/components/design-system';
 import { Send, Loader2, X, BarChart3 } from 'lucide-react';
 
-// The actual Dots — integrated in this repo (shoppersspotllc/forgeos),
-// powered by ForgeOS AI. No paid keys, no external services.
-// Clicking the avatar opens the Dots platform view.
+// The actual OpenDots dashboard — from the CopilotKit/OpenDots repository,
+// deployed to Fly.io. Opens in a new tab.
+const OPENDOTS_URL = 'https://opendots-forgeos.fly.dev';
 
 interface Dot {
   name: string;
@@ -162,7 +162,7 @@ function DotChat({ dot, onClose }: { dot: Dot; onClose: () => void }) {
   );
 }
 
-export function MyDotsView({ onOpenDots }: { onOpenDots?: () => void }) {
+export function MyDotsView() {
   const [activeDot, setActiveDot] = useState<Dot | null>(null);
 
   return (
@@ -177,11 +177,11 @@ export function MyDotsView({ onOpenDots }: { onOpenDots?: () => void }) {
               description="Dot roster. Scout has a proven browser-execution path (vertical slice, 2026-10-12); other Dots are chat-only until onboarded. Metrics appear after Governor verification."
               accent="#10b981"
             />
-            {/* Animated Dot avatar — clicking opens your repo's actual Dots,
-                powered by ForgeOS AI. No paid keys needed. */}
+            {/* Animated avatar — clicking opens the actual OpenDots dashboard
+                (CopilotKit/OpenDots repo, deployed) in a new tab. */}
             <button
-              onClick={() => onOpenDots?.()}
-              title="Open your Dots"
+              onClick={() => window.open(OPENDOTS_URL, '_blank', 'noopener,noreferrer')}
+              title="Open the real OpenDots dashboard"
               className="group relative mt-2 shrink-0 transition-transform hover:scale-110"
               style={{ width: 72, height: 72 }}
             >
