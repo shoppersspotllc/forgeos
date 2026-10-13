@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   GlassPanel, SectionHeader, FadeUp, BotAvatar, StatusPill, CinematicBackground,
 } from '@/components/design-system';
-import { Send, Loader2, X, BarChart3 } from 'lucide-react';
+import { Send, Loader2, X, BarChart3, Rocket } from 'lucide-react';
 
 interface Dot {
   name: string;
@@ -158,7 +158,7 @@ function DotChat({ dot, onClose }: { dot: Dot; onClose: () => void }) {
   );
 }
 
-export function MyDotsView() {
+export function MyDotsView({ onLaunchPlatform }: { onLaunchPlatform?: () => void }) {
   const [activeDot, setActiveDot] = useState<Dot | null>(null);
 
   return (
@@ -166,12 +166,28 @@ export function MyDotsView() {
       <CinematicBackground identityId="mydots" />
       <div className="relative p-8 max-w-7xl mx-auto">
         <FadeUp>
-          <SectionHeader
-            eyebrow="AI Workforce — Click a Dot to execute"
-            title="My Dots"
-            description="Dot roster. Scout has a proven browser-execution path (vertical slice, 2026-10-12); other Dots are chat-only until onboarded. Metrics appear after Governor verification."
-            accent="#10b981"
-          />
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <SectionHeader
+              eyebrow="AI Workforce — Click a Dot to execute"
+              title="My Dots"
+              description="Dot roster. Scout has a proven browser-execution path (vertical slice, 2026-10-12); other Dots are chat-only until onboarded. Metrics appear after Governor verification."
+              accent="#10b981"
+            />
+            {onLaunchPlatform && (
+              <button
+                onClick={onLaunchPlatform}
+                className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl font-bold text-sm transition-all hover:scale-105 mt-2"
+                style={{
+                  background: 'linear-gradient(135deg, #10b981, #06b6d4)',
+                  color: '#fff',
+                  boxShadow: '0 8px 32px rgba(16,185,129,0.35)',
+                }}
+              >
+                <Rocket className="h-5 w-5" />
+                Launch OpenDots Platform
+              </button>
+            )}
+          </div>
         </FadeUp>
 
         <div className="grid grid-cols-3 gap-4 mb-8">
