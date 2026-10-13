@@ -52,7 +52,26 @@ export async function POST(req: NextRequest) {
 
   const serviceKey = getServiceKey();
   if (!serviceKey) {
-    return new Response('Service not configured', { status: 503 });
+    // Return SSE-formatted error so the client renders it properly.
+    // The operator fix: set FORGEOS_MYDOTS_KEY in Vercel env vars for
+    // Preview + Production, then redeploy. See /api/my-dots/health.
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(
+          `data: ${JSON.stringify({ type: 'error', message: 'Dots backend not configured. Administrator: set FORGEOS_MYDOTS_KEY in Vercel environment variables (Preview + Production) and redeploy. Check /api/my-dots/health for status.' })}\n\n`
+        ));
+        controller.close();
+      },
+    });
+    return new Response(stream, {
+      status: 503,
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
   }
 
   let body: any;

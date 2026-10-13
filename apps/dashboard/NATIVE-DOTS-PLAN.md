@@ -1,5 +1,22 @@
 # Option C: Native Dots Runtime in ForgeOS — Implementation Plan
 
+## Required Vercel Environment Variables
+
+The native Dots backend requires these server-side env vars. Set them in
+Vercel → Project → Settings → Environment Variables. **Enable for ALL
+environments (Production, Preview, Development)** to avoid 503s on preview
+deployments.
+
+| Variable | Purpose | Required for |
+|----------|---------|--------------|
+| `FORGEOS_MYDOTS_KEY` | Service credential for ForgeOS AI chat backend | `/api/my-dots/stream`, `/api/my-dots/chat` |
+
+**Diagnosis:** `GET /api/my-dots/health` returns `serviceKeyConfigured: true/false`
+(boolean only, never the secret value). If `false`, the stream endpoint returns
+HTTP 503 with an SSE error event explaining the fix.
+
+**Never** expose this key in client code, Git, logs, or chat. It stays server-side only.
+
 ## Goal
 Build a native Dots runtime inside ForgeOS, integrated exclusively through ForgeOS AI.
 No CopilotKit, no external accounts, no new spending.
