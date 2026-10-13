@@ -4,7 +4,12 @@ import { useState, useRef, useEffect } from 'react';
 import {
   GlassPanel, SectionHeader, FadeUp, BotAvatar, StatusPill, CinematicBackground,
 } from '@/components/design-system';
-import { Send, Loader2, X, BarChart3, Rocket } from 'lucide-react';
+import { Send, Loader2, X, BarChart3 } from 'lucide-react';
+
+// Real OpenDots platform URL (deployed from CopilotKit/OpenDots).
+// Opens in a new tab — the actual OpenDots dashboard with its Dots,
+// avatars, and integrations.
+const OPENDOTS_URL = 'https://opendots-forgeos.fly.dev';
 
 interface Dot {
   name: string;
@@ -158,7 +163,7 @@ function DotChat({ dot, onClose }: { dot: Dot; onClose: () => void }) {
   );
 }
 
-export function MyDotsView({ onLaunchPlatform }: { onLaunchPlatform?: () => void }) {
+export function MyDotsView() {
   const [activeDot, setActiveDot] = useState<Dot | null>(null);
 
   return (
@@ -173,20 +178,49 @@ export function MyDotsView({ onLaunchPlatform }: { onLaunchPlatform?: () => void
               description="Dot roster. Scout has a proven browser-execution path (vertical slice, 2026-10-12); other Dots are chat-only until onboarded. Metrics appear after Governor verification."
               accent="#10b981"
             />
-            {onLaunchPlatform && (
-              <button
-                onClick={onLaunchPlatform}
-                className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl font-bold text-sm transition-all hover:scale-105 mt-2"
+            {/* Animated OpenDots avatar — clicking lands on the actual
+                OpenDots dashboard (real platform, new tab). */}
+            <button
+              onClick={() => window.open(OPENDOTS_URL, '_blank', 'noopener,noreferrer')}
+              title="Open the real OpenDots dashboard"
+              className="group relative mt-2 shrink-0 transition-transform hover:scale-110"
+              style={{ width: 72, height: 72 }}
+            >
+              <span
+                className="absolute inset-0 rounded-full"
                 style={{
-                  background: 'linear-gradient(135deg, #10b981, #06b6d4)',
-                  color: '#fff',
-                  boxShadow: '0 8px 32px rgba(16,185,129,0.35)',
+                  background: 'radial-gradient(circle, rgba(16,185,129,0.45) 0%, rgba(6,182,212,0.15) 60%, transparent 70%)',
+                  animation: 'opendots-pulse 2.4s ease-in-out infinite',
                 }}
+              />
+              <img
+                src="/opendots-avatar.png"
+                alt="OpenDots"
+                className="relative rounded-full"
+                style={{
+                  width: 72, height: 72, objectFit: 'cover',
+                  border: '2px solid rgba(16,185,129,0.6)',
+                  boxShadow: '0 0 24px rgba(16,185,129,0.45)',
+                  animation: 'opendots-float 3.2s ease-in-out infinite',
+                }}
+              />
+              <span
+                className="absolute -bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
               >
-                <Rocket className="h-5 w-5" />
-                Launch OpenDots Platform
-              </button>
-            )}
+                OpenDots ↗
+              </span>
+              <style>{`
+                @keyframes opendots-pulse {
+                  0%, 100% { transform: scale(1); opacity: 0.7; }
+                  50% { transform: scale(1.25); opacity: 1; }
+                }
+                @keyframes opendots-float {
+                  0%, 100% { transform: translateY(0); }
+                  50% { transform: translateY(-4px); }
+                }
+              `}</style>
+            </button>
           </div>
         </FadeUp>
 
