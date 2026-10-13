@@ -104,11 +104,74 @@ const PLATFORMS: Platform[] = [
     dashboardLabel: 'Open PinDrop Dashboard',
     credits: {
       total: 2000,
-      available: 1750,
-      used: 250,
+      available: 1450,
+      used: 550,
       refreshDay: 30,
     },
     projects: [
+      {
+        name: 'Maria Herrera Real Estate', status: 'Live — ready for outreach', statusTone: 'good',
+        url: 'https://maria-herrera-real-estate.yoursite.page/',
+        createdBy: 'Craftsman',
+        createdOn: 'Oct 2026',
+        playbook: {
+          whereNow: 'Website is live. SMS/email templates ready in PinDrop. Sender name shows "shoppers" — must be changed to "Dexter from Shoppers Spot LLC" per send until support fixes it.',
+          whatsStopping: 'Owner outreach not yet sent. Awaiting Dexter\'s approval to send.',
+          whatToDo: [
+            'Dexter reviews SMS/email templates in PinDrop',
+            'Dexter sends from his phone/email with corrected sender name',
+            'Follow up in 2 days if no reply',
+          ],
+          resolution: 'Templates ready. Awaiting owner approval to send first outreach.',
+        },
+      },
+      {
+        name: 'Eleanor Wong Cornett Real Estate', status: 'Live — ready for outreach', statusTone: 'good',
+        url: 'https://eleanor-wong-cornett-real-estate.yoursite.page/',
+        createdBy: 'Craftsman',
+        createdOn: 'Oct 2026',
+        playbook: {
+          whereNow: 'Website is live. SMS/email templates ready in PinDrop. Sender name shows "shoppers" — must be changed to "Dexter from Shoppers Spot LLC" per send.',
+          whatsStopping: 'Owner outreach not yet sent. Awaiting Dexter\'s approval.',
+          whatToDo: [
+            'Dexter reviews templates and sends with corrected sender name',
+            'Follow up in 2 days if no reply',
+          ],
+          resolution: 'Templates ready. Awaiting owner approval to send.',
+        },
+      },
+      {
+        name: 'Main Element Hair Studio', status: 'Live — newly published', statusTone: 'good',
+        url: 'https://main-element-hair-studio.yoursite.page/',
+        createdBy: 'Craftsman',
+        createdOn: 'Oct 2026',
+        playbook: {
+          whereNow: 'Website is live. Booking form, click-to-call (832) 823-4244 verified. Form sends to placeholder email — needs owner\'s real email before outreach.',
+          whatsStopping: 'Need the salon\'s real email for form submissions.',
+          whatToDo: [
+            'Obtain owner email and update form destination',
+            'Prepare outreach templates in PinDrop',
+            'Dexter approves and sends outreach',
+          ],
+          resolution: 'Get real email first, then proceed to outreach.',
+        },
+      },
+      {
+        name: 'Liliana Matcas — Legacy Shift Insurance', status: 'Live — newly published', statusTone: 'good',
+        url: 'https://liliana-matcas.yoursite.page/',
+        createdBy: 'Craftsman',
+        createdOn: 'Oct 2026',
+        playbook: {
+          whereNow: 'Website is live. Quote form with consent checkbox, click-to-call (312) 439-2526 verified. No coverage guarantees. Form sends to placeholder — needs real email.',
+          whatsStopping: 'Need Liliana\'s real email for quote form submissions.',
+          whatToDo: [
+            'Obtain real email and update form destination',
+            'Prepare outreach templates',
+            'Dexter approves and sends',
+          ],
+          resolution: 'Get real email first, then outreach.',
+        },
+      },
       {
         name: 'Delco Air', status: 'Published & emailed', statusTone: 'good',
         url: 'https://delco-air.yoursite.page/',
@@ -721,7 +784,17 @@ function PlatformDetail({ platform, onBack }: { platform: Platform; onBack: () =
         </GlassPanel>
       )}
 
-      {/* Meet the Dots — first-person introductions */}
+      {/* Projects with revenue playbooks — TOP */}
+      <h3 className="text-lg font-extrabold mb-3 flex items-center gap-2" style={{ color: 'var(--text)' }}>
+        <Flag className="h-5 w-5" style={{ color: platform.color }} /> Projects & revenue playbook
+      </h3>
+      <div className="space-y-4 mb-8">
+        {platform.projects.map((p) => (
+          <ProjectCard key={p.name} platform={platform} project={p} />
+        ))}
+      </div>
+
+      {/* Meet the Dots — first-person introductions — BELOW PROJECTS */}
       <h3 className="text-lg font-extrabold mb-1 flex items-center gap-2" style={{ color: 'var(--text)' }}>
         <Bot className="h-5 w-5" style={{ color: platform.color }} /> Meet your team
       </h3>
@@ -771,16 +844,6 @@ function PlatformDetail({ platform, onBack }: { platform: Platform; onBack: () =
             </GlassPanel>
           );
         })}
-      </div>
-
-      {/* Projects with revenue playbooks */}
-      <h3 className="text-lg font-extrabold mb-3 flex items-center gap-2" style={{ color: 'var(--text)' }}>
-        <Flag className="h-5 w-5" style={{ color: platform.color }} /> Projects & revenue playbook
-      </h3>
-      <div className="space-y-4 mb-8">
-        {platform.projects.map((p) => (
-          <ProjectCard key={p.name} platform={platform} project={p} />
-        ))}
       </div>
 
     </FadeUp>
