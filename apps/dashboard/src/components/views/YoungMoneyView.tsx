@@ -252,23 +252,23 @@ const PLATFORMS: Platform[] = [
     projects: [
       {
         name: 'BidReady AI', status: 'Building — 1/7 tasks', statusTone: 'idle',
-        url: 'https://studio.shogo.ai/',
+        url: '',
         createdBy: 'Shogo AI',
         createdOn: 'Oct 2026',
         playbook: {
-          whereNow: '33 files changed, 137 tool calls. Task 1 of 7 in progress.',
-          whatsStopping: 'Build is mid-flight — needs your direction in Shogo Studio to continue.',
+          whereNow: '33 files changed, 137 tool calls. Task 1 of 7 in progress. No live URL yet — the build must complete first.',
+          whatsStopping: 'Build is mid-flight in Shogo. No deployed version exists to preview.',
           whatToDo: [
-            'Open the project in Shogo Studio and review task 1 output',
-            'Approve or redirect, then let it continue to task 2',
-            'Plan the launch: pricing + landing page when build completes',
+            'Let Shogo finish the build (or ask Muse to check status)',
+            'Once live, the project URL will appear here',
+            'You can then click through the actual working app',
           ],
-          resolution: 'Open studio.shogo.ai, review, and keep the build moving.',
+          resolution: 'No live URL yet. The build needs to complete before there is something to click through.',
         },
       },
       {
         name: 'QuickBill Invoice Generator', status: 'Building', statusTone: 'idle',
-        url: 'https://studio.shogo.ai/',
+        url: '',
         createdBy: 'Shogo AI',
         createdOn: 'Oct 2026',
         playbook: {
