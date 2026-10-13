@@ -6,6 +6,7 @@ import { ColibriView } from '@/components/views/ColibriView';
 import { CanvaView } from '@/components/views/CanvaView';
 import { CommandView } from '@/components/views/CommandView';
 import { MyDotsView } from '@/components/views/MyDotsView';
+import { OpenDotsPlatformView } from '@/components/views/OpenDotsPlatformView';
 // Workforce Command Center view
 import { WorkforceView } from '@/components/views/WorkforceView';
 import { TasksView } from '@/components/views/TasksView';
@@ -60,7 +61,8 @@ export default function Home() {
   const renderView = () => {
     switch (view) {
       case 'command': return <CommandView onNavigate={(v: string) => setView(v as View)} />;
-      case 'mydots': return <MyDotsView />;
+      case 'mydots': return <MyDotsView onOpenDots={() => setView('opendots')} />;
+      case 'opendots': return <OpenDotsPlatformView onBack={() => setView('mydots')} />;
       case 'workforce': return <WorkforceView />;
       case 'tasks': return <TasksView />;
       case 'colibri': return <ColibriView />;

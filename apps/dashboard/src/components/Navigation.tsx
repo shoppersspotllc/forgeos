@@ -8,7 +8,7 @@ import {
 export type View = 
   | 'command' | 'youngmoney' | 'godseye' | 'shogo' | 'positionai' | 'mydots'
   | 'chrome' | 'github' | 'opencode' | 'claude' | 'colibri'
-  | 'canva' | 'forgeai' | 'health' | 'mediaengine' | 'tasks' | 'workforce';
+  | 'canva' | 'forgeai' | 'health' | 'mediaengine' | 'tasks' | 'workforce' | 'opendots';
 
 const primaryItems = [
   { id: 'command' as View, label: 'Forge Dashboard', icon: Terminal },
