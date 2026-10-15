@@ -7,8 +7,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getStats, recordEvent, getEvents } from '@/lib/revenue/tracker';
+import { checkAdmin } from '@/lib/forgeos-ai/admin-auth';
 
 export async function GET(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Admin authentication required' }, { status: 403 });
+  }
   const { searchParams } = new URL(req.url);
   const engine = searchParams.get('engine') || undefined;
   const includeEvents = searchParams.get('events') === 'true';
@@ -22,6 +26,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Admin authentication required' }, { status: 403 });
+  }
   let body: any;
   try {
     body = await req.json();
