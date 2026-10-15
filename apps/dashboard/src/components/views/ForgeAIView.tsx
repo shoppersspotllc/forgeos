@@ -480,6 +480,46 @@ export function ForgeAIView() {
                 )}
               </GlassPanel>
             </FadeUp>
+            {/* Unified API reference */}
+            <FadeUp delay={280}>
+              <GlassPanel className="mt-8">
+                <h3 className="font-bold text-lg mb-1" style={{ color: 'var(--text)' }}>Unified API</h3>
+                <p className="text-xs mb-4" style={{ color: 'var(--text-secondary)' }}>
+                  One stable interface for apps, Dots, and agents. Consumers authenticate with a ForgeOS API key —
+                  they never need upstream provider keys. ForgeOS AI selects the provider behind the scenes.
+                </p>
+                <div className="grid md:grid-cols-2 gap-3 text-xs">
+                  <div className="rounded-xl p-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                    <p className="font-bold mb-1" style={{ color: 'var(--text-muted)' }}>BASE URL</p>
+                    <code className="font-mono break-all" style={{ color: 'var(--text)' }}>
+                      {typeof window !== 'undefined' ? window.location.origin : ''}
+                    </code>
+                    <p className="font-bold mt-3 mb-1" style={{ color: 'var(--text-muted)' }}>ENDPOINT</p>
+                    <code className="font-mono" style={{ color: 'var(--text)' }}>POST /api/forgeos-ai/chat</code>
+                    <p className="font-bold mt-3 mb-1" style={{ color: 'var(--text-muted)' }}>AUTHENTICATION</p>
+                    <code className="font-mono" style={{ color: 'var(--text)' }}>Authorization: Bearer fk_…</code>
+                    <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>
+                      Issue keys in the Provider Hub above. Limit: 60 requests/min per key.
+                    </p>
+                  </div>
+                  <div className="rounded-xl p-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                    <p className="font-bold mb-1" style={{ color: 'var(--text-muted)' }}>EXAMPLE REQUEST</p>
+                    <pre className="font-mono text-[11px] leading-relaxed overflow-x-auto whitespace-pre-wrap break-all"
+                         style={{ color: 'var(--text)' }}>
+{`curl -X POST ${typeof window !== 'undefined' ? window.location.origin : ''}/api/forgeos-ai/chat \\
+  -H "Authorization: Bearer fk_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"model":"auto","messages":[{"role":"user","content":"Hello"}]}'`}
+                    </pre>
+                    <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>
+                      <code>model</code>: <code>auto</code> (router picks) or a specific model. Optional:{' '}
+                      <code>capability</code> (chat/coding/fast), <code>temperature</code>. Failed providers fall back
+                      automatically; if all fail you get an honest error — never a fabricated reply.
+                    </p>
+                  </div>
+                </div>
+              </GlassPanel>
+            </FadeUp>
           </>
         )}
       </div>
