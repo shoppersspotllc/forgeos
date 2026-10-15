@@ -38,6 +38,9 @@ const BUILT_IN_PROVIDERS = [
     priority: 10,
     timeout: 120000,
     capabilities: [CAPABILITIES.CHAT, CAPABILITIES.CODING, CAPABILITIES.FAST, CAPABILITIES.VISION],
+    // /models is public on OpenRouter — it does NOT validate the key.
+    // /auth/key returns 200 for a valid key, 401 otherwise.
+    validateUrl: 'https://openrouter.ai/api/v1/auth/key',
   },
   {
     id: 'omniroute',
@@ -78,12 +81,19 @@ class Provider {
     this.priority = def.priority;
     this.timeout = def.timeout || 60000;
     this.capabilities = def.capabilities || [CAPABILITIES.CHAT];
+    // Optional authenticated validation endpoint. When set, healthCheck probes
+    // this URL instead of /models, because some providers (e.g. OpenRouter)
+    // serve /models without authentication — which would falsely report CONNECTED.
+    this.validateUrl = def.validateUrl || null;
     // Health state
     this.state = ProviderState.NEEDS_CONFIGURATION;
     this.lastCheck = null;
     this.lastLatency = null;
     this.lastError = null;
     this.modelCount = 0;
+    // Admin-controlled availability (provider hub). Disabled providers are
+    // never routed to, but keep their credentials and health history.
+    this.enabled = def.enabled !== false;
     // Circuit breaker state
     this.circuit = 'CLOSED';
     this.consecutiveFailures = 0;
@@ -98,6 +108,13 @@ class Provider {
   isConfigured() {
     if (!this.requiresKey) return true;
     return vault.has(this.id);
+  }
+
+  /** Admin toggle. Disabling never deletes credentials or history. */
+  setEnabled(enabled) {
+    this.enabled = !!enabled;
+    if (!this.enabled) this.circuit = 'CLOSED'; // reset breaker state bookkeeping
+    return this.enabled;
   }
 
   supports(capability) {
@@ -184,14 +201,19 @@ class Provider {
       }
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 15000);
-      const res = await fetch(`${this.baseUrl}/models`, { headers, signal: ctrl.signal });
+      // validateUrl (when set) hits an endpoint that actually requires auth;
+      // plain /models is only a model catalog and may be public.
+      const probeUrl = this.validateUrl || `${this.baseUrl}/models`;
+      const res = await fetch(probeUrl, { headers, signal: ctrl.signal });
       clearTimeout(timer);
       const latency = Date.now() - start;
       this.lastCheck = new Date().toISOString();
 
       if (res.ok) {
         const data = await res.json().catch(() => ({}));
-        this.modelCount = data.data?.length || 0;
+        if (!this.validateUrl) {
+          this.modelCount = data.data?.length || 0;
+        }
         this.recordSuccess(latency);
         if (this.circuit === 'CLOSED') {
           this.state = ProviderState.CONNECTED;
@@ -224,6 +246,7 @@ class Provider {
       id: this.id,
       label: this.label,
       state: this.state,
+      enabled: this.enabled,
       circuit: this.circuit,
       local: this.local,
       configured: this.isConfigured(),
@@ -360,9 +383,10 @@ class ProviderPool {
     return [...this.providers.values()].sort((a, b) => a.priority - b.priority);
   }
 
-  /** Routing-eligible: configured, supports capability, circuit allows. */
+  /** Routing-eligible: enabled, configured, supports capability, circuit allows. */
   eligible(capability = CAPABILITIES.CHAT) {
     return this.sorted().filter(p =>
+      p.enabled &&
       p.isConfigured() &&
       p.supports(capability) &&
       p.circuitAllows() &&
@@ -423,7 +447,7 @@ class ProviderPool {
 
     const preferred = options.provider ? [this.get(options.provider)].filter(Boolean) : [];
     const candidates = [
-      ...preferred.filter(p => p.supports(capability)),
+      ...preferred.filter(p => p.enabled && p.supports(capability)),
       ...this.eligible(capability).filter(p => !preferred.includes(p)),
     ];
 
