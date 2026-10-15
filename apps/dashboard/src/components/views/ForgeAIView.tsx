@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   GlassPanel, SectionHeader, FadeUp, StatusPill, CinematicBackground, AnimatedNumber,
 } from '@/components/design-system';
@@ -45,6 +45,22 @@ export function ForgeAIView() {
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [newKeyName, setNewKeyName] = useState('');
   const [issuedKey, setIssuedKey] = useState<{ key: string; keyId: string; name: string } | null>(null);
+  // Refs for "click No key on a card → jump to its key entry in the Provider Hub"
+  const hubSectionRef = useRef<HTMLDivElement | null>(null);
+  const adminTokenInputRef = useRef<HTMLInputElement | null>(null);
+  const keyInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  /** Clicking "No key" on a provider card scrolls to the Provider Hub and
+   *  focuses that provider's key input (or the admin-token input if locked). */
+  const jumpToKeyEntry = (providerId: string) => {
+    hubSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Wait for any pending render, then focus the right field.
+    window.setTimeout(() => {
+      const keyEl = keyInputRefs.current[providerId];
+      if (keyEl) { keyEl.focus(); return; }
+      adminTokenInputRef.current?.focus();
+    }, 450);
+  };
 
   const adminFetch = async (path: string, method = 'GET', body?: any) => {
     const res = await fetch(`/api/forgeos-ai/admin/${path}`, {
@@ -294,12 +310,16 @@ export function ForgeAIView() {
                           <p className="text-sm font-bold" style={{ color: 'var(--text)' }}><AnimatedNumber value={p.modelCount} /></p>
                           <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Models</p>
                         </div>
-                        <div className="rounded-lg py-2" style={{ background: 'var(--surface)' }}>
+                        <button
+                          onClick={() => jumpToKeyEntry(p.id)}
+                          title={p.configured ? 'Manage key in Provider Hub' : 'Add API key in Provider Hub'}
+                          className="rounded-lg py-2 w-full transition-all hover:scale-[1.03] cursor-pointer"
+                          style={{ background: 'var(--surface)', border: p.configured ? '1px solid transparent' : '1px dashed var(--warning)' }}>
                           <p className="text-sm font-bold" style={{ color: p.configured ? 'var(--success)' : 'var(--warning)' }}>
                             {p.configured ? <CheckCircle2 className="h-4 w-4 inline" /> : <KeyRound className="h-4 w-4 inline" />}
                           </p>
-                          <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{p.configured ? 'Key set' : 'No key'}</p>
-                        </div>
+                          <p className="text-[10px] underline decoration-dotted underline-offset-2" style={{ color: 'var(--text-muted)' }}>{p.configured ? 'Key set' : 'No key'}</p>
+                        </button>
                       </div>
                       {p.error && (
                         <p className="text-xs flex items-start gap-1.5" style={{ color: 'var(--text-muted)' }}>
@@ -321,6 +341,7 @@ export function ForgeAIView() {
 
             {/* Provider Hub — credential management, testing, API keys (desktop gateway) */}
             <FadeUp delay={240}>
+              <div ref={hubSectionRef} style={{ scrollMarginTop: '12px' }}>
               <GlassPanel className="mt-8">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                   <div>
@@ -337,6 +358,7 @@ export function ForgeAIView() {
                   <div className="flex flex-wrap items-center gap-2">
                     <input
                       type="password"
+                      ref={adminTokenInputRef}
                       value={adminToken}
                       onChange={e => setAdminToken(e.target.value)}
                       placeholder="Admin token (FORGEOS_ADMIN_TOKEN)"
@@ -386,6 +408,7 @@ export function ForgeAIView() {
                           <div className="flex flex-wrap items-center gap-2">
                             <input
                               type="password"
+                              ref={el => { keyInputRefs.current[p.id] = el; }}
                               value={keyInput[p.id] || ''}
                               onChange={e => setKeyInput(prev => ({ ...prev, [p.id]: e.target.value }))}
                               placeholder={`Paste ${p.label} API key`}
@@ -479,6 +502,7 @@ export function ForgeAIView() {
                   </>
                 )}
               </GlassPanel>
+              </div>
             </FadeUp>
             {/* Unified API reference */}
             <FadeUp delay={280}>
