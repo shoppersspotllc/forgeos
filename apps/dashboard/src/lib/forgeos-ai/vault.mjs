@@ -52,6 +52,18 @@ class Vault {
     return val;
   }
 
+  /**
+   * Stores a validated credential in memory for this server instance.
+   * EPHEMERAL: lost on cold start / redeploy. For persistence, set the
+   * FORGEOS_<ID>_KEY env var. Only call after the key has been validated
+   * against the real provider. NEVER expose via API.
+   */
+  setEphemeral(providerId, key) {
+    if (!providerId || !key || !key.trim()) return false;
+    this.cache.set(providerId, key.trim());
+    return true;
+  }
+
   /** Public status — metadata only, no values. */
   status(providerId) {
     const has = this.has(providerId);

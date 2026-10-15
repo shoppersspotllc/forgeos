@@ -67,7 +67,7 @@ function logAIEvent(event: string, data: Record<string, any>) {
 // Lazy-load the in-process pool to avoid importing Node.js 'fs' at module level
 // in environments where it might not be available during build.
 let poolInstance: any = null;
-async function getPool() {
+export async function getPool() {
   if (!poolInstance) {
     const mod = await import('./providers.mjs');
     poolInstance = mod.pool;

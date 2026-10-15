@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   GlassPanel, SectionHeader, FadeUp, StatusPill, CinematicBackground, AnimatedNumber,
 } from '@/components/design-system';
-import { Brain, Server, KeyRound, AlertTriangle, CheckCircle2, RefreshCw, Network } from 'lucide-react';
+import { Brain, Server, KeyRound, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Network } from 'lucide-react';
 
 interface ProviderStatus {
   id: string;
@@ -25,6 +25,16 @@ const STATE_META: Record<string, { color: string; bg: string; label: string }> =
   VERIFYING: { color: 'var(--accent)', bg: 'var(--accent-glow)', label: 'Verifying' },
   OFFLINE: { color: 'var(--text-muted)', bg: 'var(--surface)', label: 'Offline' },
   TIMEOUT: { color: 'var(--error)', bg: 'color-mix(in srgb, var(--error) 12%, transparent)', label: 'Timeout' },
+};
+
+// Traffic-light key health: green = key works, red = key rejected (change it),
+// yellow = no key (revisit), gray = not yet checked / no key required.
+const KEY_HEALTH_META: Record<string, { color: string; label: string; hint: string }> = {
+  healthy:   { color: 'var(--success)', label: 'Healthy',   hint: 'Key is valid and working' },
+  invalid:   { color: 'var(--error)',   label: 'Invalid key', hint: 'Key was rejected — change it' },
+  missing:   { color: 'var(--warning)', label: 'No key',    hint: 'Add a key to activate' },
+  unchecked: { color: 'var(--text-muted)', label: 'Not checked', hint: 'Health not yet verified' },
+  'n/a':     { color: 'var(--text-muted)', label: 'No key needed', hint: 'Local provider' },
 };
 
 export function ForgeAIView() {
@@ -86,6 +96,16 @@ export function ForgeAIView() {
         setModalResult({ valid: false, modelCount: null, latencyMs: 0, error: data.error || `HTTP ${res.status}`, detail: null });
       } else {
         setModalResult(data);
+        // Optimistically reflect the validated key health on the provider card.
+        if (data.valid) {
+          setProviders(prev => prev.map(p =>
+            p.id === keyModal ? { ...p, keyHealth: 'healthy', modelCount: data.modelCount ?? p.modelCount, latencyMs: data.latencyMs ?? p.latencyMs } : p
+          ));
+        } else if (data.error && /invalid|rejected/i.test(data.error)) {
+          setProviders(prev => prev.map(p =>
+            p.id === keyModal ? { ...p, keyHealth: 'invalid' } : p
+          ));
+        }
       }
     } catch {
       setModalResult({ valid: false, modelCount: null, latencyMs: 0, error: 'Network error reaching the validation service.', detail: null });
@@ -139,11 +159,35 @@ export function ForgeAIView() {
     if (!credential) return;
     setOpBusy(id, 'save');
     setHubMsg(prev => ({ ...prev, [id]: '' }));
+    setHubError(null);
     try {
-      await adminFetch(`providers/${encodeURIComponent(id)}/credential`, 'POST', { credential });
+      // 1. Validate against the real provider AND activate in-process so it
+      //    actually connects — the top provider cards update with real status.
+      const res = await fetch('/api/forgeos-ai/providers/activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify({ providerId: id, key: credential }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || `Activation failed (HTTP ${res.status})`);
+      }
       setKeyInput(prev => ({ ...prev, [id]: '' }));
-      setHubMsg(prev => ({ ...prev, [id]: 'Key saved securely. Run Test to validate.' }));
+      const models = data.modelCount != null ? `, ${data.modelCount} models` : '';
+      setHubMsg(prev => ({
+        ...prev,
+        [id]: `✓ Connected${models} (${data.latencyMs}ms). Active for this session — set FORGEOS_${id.toUpperCase().replace(/-/g, '_')}_KEY in Vercel env vars for permanence.`,
+      }));
+      // 2. Best-effort: also persist to the desktop gateway for when it's reachable.
+      try {
+        await adminFetch(`providers/${encodeURIComponent(id)}/credential`, 'POST', { credential });
+      } catch { /* desktop gateway unreachable — in-process activation stands */ }
       await refreshHubProviders();
+      // 3. Update the top provider cards from the activation response directly
+      //    (serverless instances don't share memory, so re-fetching may not see it).
+      if (data.status) {
+        setProviders(prev => prev.map(p => (p.id === id ? { ...p, ...data.status } : p)));
+      }
     } catch (e: any) {
       setHubMsg(prev => ({ ...prev, [id]: '' }));
       setHubError(e.message);
@@ -321,6 +365,8 @@ export function ForgeAIView() {
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
               {providers.map((p, i) => {
                 const meta = STATE_META[p.state] || STATE_META.OFFLINE;
+                const kh = KEY_HEALTH_META[(p as any).keyHealth || (p.configured ? 'unchecked' : 'missing')] || KEY_HEALTH_META.unchecked;
+                const khColor = kh.color;
                 return (
                   <FadeUp key={p.id} delay={i * 60}>
                     <GlassPanel hover>
@@ -330,8 +376,14 @@ export function ForgeAIView() {
                           <p className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{p.id}{p.local ? ' · local' : ''}</p>
                         </div>
                         <span className="text-[11px] font-bold px-2.5 py-1 rounded-full"
-                              style={{ background: meta.bg, color: meta.color, border: `1px solid ${meta.color}33` }}>
-                          {meta.label}
+                              style={{
+                                background: kh.label === 'Invalid key'
+                                  ? 'color-mix(in srgb, var(--error) 12%, transparent)'
+                                  : meta.bg,
+                                color: kh.label === 'Invalid key' ? 'var(--error)' : meta.color,
+                                border: `1px solid ${(kh.label === 'Invalid key' ? 'var(--error)' : meta.color)}33`,
+                              }}>
+                          {kh.label === 'Invalid key' ? 'Invalid key' : kh.label === 'No key' ? 'No key' : meta.label}
                         </span>
                       </div>
                       <div className="grid grid-cols-3 gap-2 text-center mb-3">
@@ -347,13 +399,18 @@ export function ForgeAIView() {
                         </div>
                         <button
                           onClick={() => openKeyModal(p.id)}
-                          title={p.configured ? 'Check or replace key' : 'Add API key'}
+                          title={kh.hint + ' — click to check or update the key'}
                           className="rounded-lg py-2 w-full transition-all hover:scale-[1.03] cursor-pointer"
-                          style={{ background: 'var(--surface)', border: p.configured ? '1px solid transparent' : '1px dashed var(--warning)' }}>
-                          <p className="text-sm font-bold" style={{ color: p.configured ? 'var(--success)' : 'var(--warning)' }}>
-                            {p.configured ? <CheckCircle2 className="h-4 w-4 inline" /> : <KeyRound className="h-4 w-4 inline" />}
+                          style={{
+                            background: 'var(--surface)',
+                            border: `1px ${khColor === 'var(--success)' ? 'solid' : 'dashed'} ${khColor}`,
+                          }}>
+                          <p className="text-sm font-bold" style={{ color: khColor }}>
+                            {kh.label === 'Healthy' ? <CheckCircle2 className="h-4 w-4 inline" /> :
+                             kh.label === 'Invalid key' ? <XCircle className="h-4 w-4 inline" /> :
+                             <KeyRound className="h-4 w-4 inline" />}
                           </p>
-                          <p className="text-[10px] underline decoration-dotted underline-offset-2" style={{ color: 'var(--text-muted)' }}>{p.configured ? 'Key set' : 'No key'}</p>
+                          <p className="text-[10px] underline decoration-dotted underline-offset-2" style={{ color: 'var(--text-muted)' }}>{kh.label}</p>
                         </button>
                       </div>
                       {p.error && (
@@ -453,7 +510,7 @@ export function ForgeAIView() {
                             <button onClick={() => saveCredential(p.id)} disabled={!!busy[p.id] || !(keyInput[p.id] || '').trim()}
                                     className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105 disabled:opacity-50"
                                     style={{ background: 'linear-gradient(135deg,#8b5cf6,#d946ef)', color: '#fff' }}>
-                              {busy[p.id] === 'save' ? 'Saving…' : 'Save key'}
+                              {busy[p.id] === 'save' ? 'Connecting…' : 'Save & Connect'}
                             </button>
                             <button onClick={() => testProvider(p.id)} disabled={!!busy[p.id]}
                                     className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105 disabled:opacity-50"

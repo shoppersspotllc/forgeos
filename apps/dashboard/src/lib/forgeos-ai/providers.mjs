@@ -106,6 +106,10 @@ class Provider {
     this.validateUrl = def.validateUrl || null;
     // Admin-controlled availability. Disabled providers are never routed to.
     this.enabled = def.enabled !== false;
+    // Key health: 'healthy' (key works), 'invalid' (key rejected),
+    // 'missing' (no key), 'unchecked' (not yet validated), 'n/a' (no key required).
+    // Green = healthy, Red = invalid (change the key), Yellow = missing (revisit).
+    this.keyHealth = this.requiresKey ? 'unchecked' : 'n/a';
     // Health state
     this.state = ProviderState.NEEDS_CONFIGURATION;
     this.lastCheck = null;
@@ -258,6 +262,7 @@ class Provider {
     if (this.requiresKey && !vault.has(this.id)) {
       this.state = ProviderState.NEEDS_CONFIGURATION;
       this.lastError = 'No credential configured';
+      this.keyHealth = 'missing';
       return this.publicStatus();
     }
 
@@ -297,10 +302,12 @@ class Provider {
         if (this.circuit === 'CLOSED') {
           this.state = ProviderState.CONNECTED;
           this.lastError = null;
+          if (this.requiresKey) this.keyHealth = 'healthy';
         }
       } else if (res.status === 401 || res.status === 403) {
         this.state = ProviderState.NEEDS_CONFIGURATION;
         this.lastError = `Authentication failed (${res.status}) — check credential`;
+        if (this.requiresKey) this.keyHealth = 'invalid';
         this.recordFailure(this.lastError);
       } else {
         this.recordFailure(`HTTP ${res.status}`);
@@ -326,6 +333,10 @@ class Provider {
       label: this.label,
       state: this.state,
       enabled: this.enabled,
+      // Granular key health for the traffic-light UI:
+      // 'healthy' (green) | 'invalid' (red, change key) | 'missing' (yellow, revisit) |
+      // 'unchecked' (gray) | 'n/a' (no key required).
+      keyHealth: this.keyHealth,
       circuit: this.circuit,
       local: this.local,
       configured: this.isConfigured(),

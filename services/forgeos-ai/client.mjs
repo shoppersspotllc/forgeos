@@ -30,9 +30,14 @@ class ForgeOSAIClient {
    * NEVER call providers directly.
    */
   async chat(messages, options = {}) {
+    const headers = { 'Content-Type': 'application/json' };
+    // ForgeOS service credential (fk_) — required by gateway for /v1/chat/completions.
+    // Read from FORGEOS_SERVICE_KEY env var. Never logged, never exposed.
+    const svcKey = process.env.FORGEOS_SERVICE_KEY;
+    if (svcKey) headers['Authorization'] = `Bearer ${svcKey}`;
     const res = await fetch(`${this.baseUrl}/v1/chat/completions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       signal: AbortSignal.timeout(options.timeout || 180000),
       body: JSON.stringify({
         messages,
