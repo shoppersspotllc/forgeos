@@ -41,9 +41,22 @@ function checkRate(key: string, max: number, windowMs: number): boolean {
 }
 
 function getIp(req: NextRequest): string {
-  return req.headers.get('x-forwarded-for')?.split(',')[0].trim()
-    || req.headers.get('x-real-ip')?.trim()
-    || 'unknown';
+  // SECURITY: x-forwarded-for leftmost value is client-controlled and trivially
+  // spoofable (attacker sends X-Forwarded-For: <random> to get a fresh rate-limit
+  // bucket per request). Only trust proxy headers when TRUST_PROXY_HEADERS=true
+  // (e.g. Vercel, where the edge appends the real client IP as the RIGHTMOST entry).
+  // On direct/self-hosted deployments, ignore them entirely.
+  if (process.env.TRUST_PROXY_HEADERS === 'true') {
+    const forwarded = req.headers.get('x-forwarded-for');
+    if (forwarded) {
+      const parts = forwarded.split(',').map(s => s.trim()).filter(Boolean);
+      // Rightmost = added by the closest trusted proxy, not client-controlled.
+      if (parts.length > 0) return parts[parts.length - 1];
+    }
+    const realIp = req.headers.get('x-real-ip')?.trim();
+    if (realIp) return realIp;
+  }
+  return 'direct';
 }
 
 export async function POST(req: NextRequest) {

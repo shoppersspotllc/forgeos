@@ -86,6 +86,10 @@ describe('route files contain checkAdmin', () => {
     'src/app/api/publish/pinterest/route.ts',
     'src/app/api/tasks/route.ts',
     'src/app/api/young-money/fix-deploy/route.ts',
+    // Round 2 fixes (2026-10-15)
+    'src/app/api/forgeos-ai/providers/check/route.ts',
+    'src/app/api/github/analyze/route.ts',
+    'src/app/api/revenue/stats/route.ts',
   ];
 
   for (const route of routes) {
@@ -137,5 +141,40 @@ describe('shared auth lib exists', () => {
     assert.ok(content.includes('export function checkAdmin'), 'Must export checkAdmin');
     assert.ok(content.includes('timingSafeEqual'), 'Must use timing-safe comparison');
     assert.ok(content.includes('FORGEOS_ADMIN_TOKEN'), 'Must read FORGEOS_ADMIN_TOKEN');
+  });
+});
+
+describe('research rate limiter IP spoofing fix', () => {
+  test('getIp does not trust leftmost x-forwarded-for', () => {
+    const content = readFileSync(join(SRC_ROOT, 'src/app/api/research/route.ts'), 'utf-8');
+    // Must NOT use the old vulnerable pattern: split(',')[0]
+    assert.ok(
+      !content.includes("split(',')[0]"),
+      'Must not trust leftmost x-forwarded-for (client-controlled)'
+    );
+  });
+
+  test('getIp only trusts proxy headers when TRUST_PROXY_HEADERS=true', () => {
+    const content = readFileSync(join(SRC_ROOT, 'src/app/api/research/route.ts'), 'utf-8');
+    assert.ok(
+      content.includes("process.env.TRUST_PROXY_HEADERS === 'true'"),
+      'Must gate proxy header trust behind TRUST_PROXY_HEADERS'
+    );
+  });
+
+  test('getIp uses rightmost entry when trusting proxy (Vercel appends real IP last)', () => {
+    const content = readFileSync(join(SRC_ROOT, 'src/app/api/research/route.ts'), 'utf-8');
+    assert.ok(
+      content.includes('parts[parts.length - 1]'),
+      'Must take rightmost x-forwarded-for entry (added by trusted proxy)'
+    );
+  });
+
+  test('getIp falls back to direct (single bucket) without trusted proxy', () => {
+    const content = readFileSync(join(SRC_ROOT, 'src/app/api/research/route.ts'), 'utf-8');
+    assert.ok(
+      content.includes("return 'direct'"),
+      'Must fall back to single bucket when proxy headers untrusted'
+    );
   });
 });

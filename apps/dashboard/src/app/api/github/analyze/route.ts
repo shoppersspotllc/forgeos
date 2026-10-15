@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkAdmin } from '@/lib/forgeos-ai/admin-auth';
 
 /**
  * GitHub Repository Analyzer
@@ -13,6 +14,9 @@ function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
 }
 
 export async function POST(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Admin authentication required' }, { status: 403 });
+  }
   try {
     const { url } = await req.json();
     if (!url) {
