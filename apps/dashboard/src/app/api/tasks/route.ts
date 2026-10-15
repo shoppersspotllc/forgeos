@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { routeChat, getHealthData } from '@/lib/forgeos-ai/gateway-dual';
+import { checkAdmin } from '@/lib/forgeos-ai/admin-auth';
 
 /**
  * ForgeOS Task Chain — Minimal E2E Proof
@@ -165,6 +166,9 @@ async function executeDot(dot: string, action: string, task: Task): Promise<unkn
 }
 
 export async function POST(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Admin authentication required' }, { status: 403 });
+  }
   const task: Task = {
     id: `task_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     task: '',
@@ -227,6 +231,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Admin authentication required' }, { status: 403 });
+  }
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
 

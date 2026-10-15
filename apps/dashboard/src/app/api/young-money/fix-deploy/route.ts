@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkAdmin } from '@/lib/forgeos-ai/admin-auth';
 
 /**
  * POST /api/young-money/fix-deploy
@@ -60,6 +61,9 @@ const FIX_HANDLERS: Record<string, (platform: string) => FixResult> = {
 };
 
 export async function POST(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Admin authentication required' }, { status: 403 });
+  }
   try {
     const body = await req.json();
     const platform = String(body.platform || '').toLowerCase();

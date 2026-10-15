@@ -8,8 +8,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { publishArticle } from '@/lib/publish/medium';
+import { checkAdmin } from '@/lib/forgeos-ai/admin-auth';
 
 export async function POST(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Admin authentication required' }, { status: 403 });
+  }
   let body: any;
   try {
     body = await req.json();
