@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
+import { gatewayExtraHeaders } from '@/lib/forgeos-ai/gateway-headers';
 
 /**
  * ForgeOS AI Provider Hub — admin proxy to the standalone gateway.
@@ -47,6 +48,9 @@ async function proxy(req: NextRequest, slug: string[]) {
   const init: RequestInit = {
     method: req.method,
     headers: {
+      // Tunnel/proxy auth (e.g. private-access service tokens) first;
+      // the gateway's own admin token always wins.
+      ...gatewayExtraHeaders(),
       'Content-Type': 'application/json',
       Authorization: `Bearer ${gatewayToken}`,
     },

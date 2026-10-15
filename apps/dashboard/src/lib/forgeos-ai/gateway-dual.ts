@@ -7,6 +7,7 @@
 // is unreachable, ensuring the public deployment works with $0 infrastructure.
 
 import { NextResponse } from 'next/server';
+import { gatewayExtraHeaders } from './gateway-headers';
 
 const GATEWAY_URL = process.env.FORGEOS_AI_ENDPOINT || 'http://127.0.0.1:8788';
 
@@ -76,8 +77,15 @@ async function getPool() {
 
 async function tryGateway(path: string, init?: RequestInit): Promise<{ ok: boolean; data: any; status: number }> {
   try {
+    // Merge order: tunnel/proxy auth headers first, caller headers win,
+    // except the gateway's own auth which callers set explicitly.
+    const headers = {
+      ...gatewayExtraHeaders(),
+      ...((init?.headers as Record<string, string>) || {}),
+    };
     const res = await fetch(`${GATEWAY_URL}${path}`, {
       ...init,
+      headers,
       signal: AbortSignal.timeout(8000),
     });
     const data = await res.json().catch(() => ({}));
