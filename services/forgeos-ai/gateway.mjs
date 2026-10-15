@@ -7,30 +7,119 @@
 
 import { createServer } from 'http';
 import { pool, ProviderState, CAPABILITIES } from './providers.mjs';
-import { createHash } from 'crypto';
+import { vault } from './vault.mjs';
+import { createHash, randomBytes, timingSafeEqual } from 'crypto';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, chmodSync } from 'fs';
+import { join } from 'path';
 
 // --- ForgeOS-native service authentication (approved security addition) ---
 // Platforms/Dots present: Authorization: Bearer fk_...
 // Validated against FORGEOS_SERVICE_KEYS env var (JSON: keyId -> {hash, name, revoked}).
 // Provider credentials remain server-side. This changes NOTHING about routing.
+const SERVICE_KEYS_FILE =
+  process.env.FORGEOS_SERVICE_KEYS_FILE ||
+  join(process.env.FORGEOS_SECRETS_DIR || join(process.cwd(), 'secrets'), 'service-keys.json');
+
+function loadServiceKeyRegistry() {
+  let registry = {};
+  // 1. Env var (takes precedence)
+  try {
+    if (process.env.FORGEOS_SERVICE_KEYS) registry = { ...registry, ...JSON.parse(process.env.FORGEOS_SERVICE_KEYS) };
+  } catch { /* ignore malformed env */ }
+  // 2. Local file (persistent, managed via /admin/keys)
+  try {
+    if (existsSync(SERVICE_KEYS_FILE)) {
+      registry = { ...registry, ...JSON.parse(readFileSync(SERVICE_KEYS_FILE, 'utf-8')) };
+    }
+  } catch { /* no file registry */ }
+  return registry;
+}
+
+function saveServiceKeyRegistry(registry) {
+  mkdirSync(join(SERVICE_KEYS_FILE, '..'), { recursive: true });
+  writeFileSync(SERVICE_KEYS_FILE, JSON.stringify(registry, null, 2), { mode: 0o600 });
+  try { chmodSync(SERVICE_KEYS_FILE, 0o600); } catch { /* best effort */ }
+}
+
 function validateServiceCredential(authHeader) {
   if (!authHeader || typeof authHeader !== 'string') return { valid: false, reason: 'missing_credential' };
   const m = authHeader.match(/^Bearer\s+(fk_[a-f0-9]{64})$/i);
   if (!m) return { valid: false, reason: 'invalid_format' };
   const presentedHash = createHash('sha256').update(m[1]).digest('hex');
-  let registry = {};
-  try {
-    if (process.env.FORGEOS_SERVICE_KEYS) registry = JSON.parse(process.env.FORGEOS_SERVICE_KEYS);
-  } catch { /* no registry */ }
+  const registry = loadServiceKeyRegistry();
   for (const [keyId, meta] of Object.entries(registry)) {
-    if (meta.hash === presentedHash) {
-      if (meta.revoked) return { valid: false, reason: 'revoked', keyId };
-      return { valid: true, keyId, name: meta.name };
+    const storedHash = typeof meta === 'string' ? meta : meta.hash;
+    if (storedHash && storedHash.length === presentedHash.length) {
+      try {
+        if (timingSafeEqual(Buffer.from(storedHash, 'utf8'), Buffer.from(presentedHash, 'utf8'))) {
+          const metaObj = typeof meta === 'string' ? { name: keyId } : meta;
+          if (metaObj.revoked) return { valid: false, reason: 'revoked', keyId };
+          if (metaObj.expiresAt) {
+            const t = new Date(metaObj.expiresAt).getTime();
+            if (!isNaN(t) && Date.now() > t) return { valid: false, reason: 'expired', keyId };
+          }
+          return { valid: true, keyId, name: metaObj.name };
+        }
+      } catch { /* compare failed */ }
     }
   }
   return { valid: false, reason: 'invalid_credential' };
 }
 // --- End authentication ---
+
+// --- Gateway admin authentication (provider hub management) ---
+// Management endpoints (/admin/*) require FORGEOS_GATEWAY_ADMIN_TOKEN.
+// The token NEVER leaves the server: dashboard proxies it server-side.
+function checkGatewayAdmin(req) {
+  const adminToken = process.env.FORGEOS_GATEWAY_ADMIN_TOKEN;
+  if (!adminToken) return false;
+  const header = req.headers['authorization'] || '';
+  const expected = `Bearer ${adminToken}`;
+  if (header.length !== expected.length) return false;
+  try {
+    return timingSafeEqual(Buffer.from(header, 'utf8'), Buffer.from(expected, 'utf8'));
+  } catch {
+    return false;
+  }
+}
+
+// Service key issuance.
+// NOTE: key format must stay in sync with apps/dashboard/src/lib/forgeos-ai/service-keys.mjs
+// (fk_ + 32 random bytes hex; keyId = sha256(key)[0:16]; stored value = sha256(key) hex).
+function issueServiceKey(name) {
+  const key = 'fk_' + randomBytes(32).toString('hex');
+  const keyId = createHash('sha256').update(key).digest('hex').slice(0, 16);
+  const hash = createHash('sha256').update(key).digest('hex');
+  return {
+    key, // PLAINTEXT — returned ONCE to the admin caller, never stored
+    keyId,
+    entry: {
+      hash,
+      name: (name || 'unnamed-service').toString().slice(0, 100),
+      created: new Date().toISOString(),
+      expiresAt: null,
+      revoked: false,
+      lastUsed: null,
+    },
+  };
+}
+
+/** Admin key metadata — NEVER hashes or values. */
+function listServiceKeysMeta() {
+  const registry = loadServiceKeyRegistry();
+  return Object.entries(registry).map(([keyId, meta]) => {
+    const m = typeof meta === 'string' ? {} : meta;
+    return {
+      keyId,
+      name: m.name || keyId,
+      created: m.created || null,
+      expiresAt: m.expiresAt || null,
+      revoked: !!m.revoked,
+      lastUsed: m.lastUsed || null,
+    };
+  });
+}
+// --- End admin ---
 
 const PORT = parseInt(process.env.FORGEOS_AI_PORT || '8788', 10);
 const HOST = process.env.FORGEOS_AI_HOST || '127.0.0.1';
@@ -195,6 +284,94 @@ const server = createServer(async (req, res) => {
       } catch (e) {
         return json(res, 409, { error: e.message });
       }
+    }
+
+    // --- Provider hub management (admin only) ---
+    // All /admin/* routes require FORGEOS_GATEWAY_ADMIN_TOKEN.
+    if (path.startsWith('/admin/')) {
+      if (!process.env.FORGEOS_GATEWAY_ADMIN_TOKEN) {
+        return json(res, 503, { error: 'Gateway admin is not configured (FORGEOS_GATEWAY_ADMIN_TOKEN unset)' });
+      }
+      if (!checkGatewayAdmin(req)) {
+        return json(res, 403, { error: 'Admin authentication required' });
+      }
+      const seg = path.split('/').filter(Boolean); // ['admin', 'providers', ':id', 'credential']
+
+      // GET /admin/providers — full provider inventory (metadata only, never credentials)
+      if (seg[1] === 'providers' && seg.length === 2 && req.method === 'GET') {
+        return json(res, 200, { providers: pool.publicStatus(), timestamp: new Date().toISOString() });
+      }
+
+      // POST /admin/providers/:id/credential {credential} — store provider key (persistent file, 0600)
+      if (seg[1] === 'providers' && seg[3] === 'credential' && req.method === 'POST') {
+        const provider = pool.get(seg[2]);
+        if (!provider) return json(res, 404, { error: `Unknown provider '${seg[2]}'` });
+        const body = await readBody(req);
+        try {
+          vault.setProviderKey(seg[2], body.credential);
+        } catch (e) {
+          return json(res, 400, { error: e.message });
+        }
+        return json(res, 200, { id: seg[2], configured: true });
+      }
+
+      // DELETE /admin/providers/:id/credential — remove stored file credential
+      if (seg[1] === 'providers' && seg[3] === 'credential' && req.method === 'DELETE') {
+        const provider = pool.get(seg[2]);
+        if (!provider) return json(res, 404, { error: `Unknown provider '${seg[2]}'` });
+        const result = vault.removeProviderKey(seg[2]);
+        return json(res, 200, { id: seg[2], ...result });
+      }
+
+      // POST /admin/providers/:id/test — real authenticated validation (hits provider /models)
+      if (seg[1] === 'providers' && seg[3] === 'test' && req.method === 'POST') {
+        const provider = pool.get(seg[2]);
+        if (!provider) return json(res, 404, { error: `Unknown provider '${seg[2]}'` });
+        const status = await provider.healthCheck();
+        return json(res, 200, { provider: status });
+      }
+
+      // POST /admin/providers/:id/enable | /disable
+      if (seg[1] === 'providers' && (seg[3] === 'enable' || seg[3] === 'disable') && req.method === 'POST') {
+        const provider = pool.get(seg[2]);
+        if (!provider) return json(res, 404, { error: `Unknown provider '${seg[2]}'` });
+        const enabled = provider.setEnabled(seg[3] === 'enable');
+        return json(res, 200, { id: seg[2], enabled });
+      }
+
+      // GET /admin/keys — key metadata (never hashes or values)
+      if (seg[1] === 'keys' && seg.length === 2 && req.method === 'GET') {
+        return json(res, 200, { keys: listServiceKeysMeta(), timestamp: new Date().toISOString() });
+      }
+
+      // POST /admin/keys {name} — issue a service key, persist hash locally, show plaintext ONCE
+      if (seg[1] === 'keys' && seg.length === 2 && req.method === 'POST') {
+        const body = await readBody(req);
+        const issued = issueServiceKey(body.name);
+        const registry = loadServiceKeyRegistry();
+        registry[issued.keyId] = issued.entry;
+        saveServiceKeyRegistry(registry);
+        return json(res, 201, {
+          key: issued.key, // SHOW ONCE — hand to the consumer, then it cannot be retrieved again
+          keyId: issued.keyId,
+          name: issued.entry.name,
+          created: issued.entry.created,
+        });
+      }
+
+      // POST /admin/keys/:keyId/revoke
+      if (seg[1] === 'keys' && seg[3] === 'revoke' && req.method === 'POST') {
+        const registry = loadServiceKeyRegistry();
+        const meta = registry[seg[2]];
+        if (!meta) return json(res, 404, { error: `Unknown key '${seg[2]}'` });
+        const metaObj = typeof meta === 'string' ? { hash: meta, name: seg[2] } : { ...meta };
+        metaObj.revoked = true;
+        registry[seg[2]] = metaObj; // file overlay wins over env entries
+        saveServiceKeyRegistry(registry);
+        return json(res, 200, { keyId: seg[2], revoked: true });
+      }
+
+      return json(res, 404, { error: 'Unknown admin endpoint' });
     }
 
     return json(res, 404, { error: 'Not found' });

@@ -33,6 +33,122 @@ export function ForgeAIView() {
   const [checking, setChecking] = useState(false);
   const [gatewayOnline, setGatewayOnline] = useState(false);
 
+  // Provider Hub (desktop gateway management) — admin token lives in memory only.
+  const [adminToken, setAdminToken] = useState('');
+  const [hubOnline, setHubOnline] = useState(false);
+  const [hubBusy, setHubBusy] = useState(false);
+  const [hubError, setHubError] = useState<string | null>(null);
+  const [hubProviders, setHubProviders] = useState<any[]>([]);
+  const [keyInput, setKeyInput] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState<Record<string, string | boolean>>({});
+  const [hubMsg, setHubMsg] = useState<Record<string, string>>({});
+  const [apiKeys, setApiKeys] = useState<any[]>([]);
+  const [newKeyName, setNewKeyName] = useState('');
+  const [issuedKey, setIssuedKey] = useState<{ key: string; keyId: string; name: string } | null>(null);
+
+  const adminFetch = async (path: string, method = 'GET', body?: any) => {
+    const res = await fetch(`/api/forgeos-ai/admin/${path}`, {
+      method,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data;
+  };
+
+  const setOpBusy = (id: string, op: string | boolean) =>
+    setBusy(prev => ({ ...prev, [id]: op }));
+
+  const connectHub = async () => {
+    setHubBusy(true);
+    setHubError(null);
+    try {
+      const data = await adminFetch('providers');
+      setHubProviders(data.providers || []);
+      const keys = await adminFetch('keys');
+      setApiKeys(keys.keys || []);
+      setHubOnline(true);
+    } catch (e: any) {
+      setHubError(e.message || 'Could not reach the provider hub');
+      setHubOnline(false);
+    }
+    setHubBusy(false);
+  };
+
+  const refreshHubProviders = async () => {
+    try {
+      const data = await adminFetch('providers');
+      setHubProviders(data.providers || []);
+    } catch { /* keep old state */ }
+  };
+
+  const saveCredential = async (id: string) => {
+    const credential = (keyInput[id] || '').trim();
+    if (!credential) return;
+    setOpBusy(id, 'save');
+    setHubMsg(prev => ({ ...prev, [id]: '' }));
+    try {
+      await adminFetch(`providers/${encodeURIComponent(id)}/credential`, 'POST', { credential });
+      setKeyInput(prev => ({ ...prev, [id]: '' }));
+      setHubMsg(prev => ({ ...prev, [id]: 'Key saved securely. Run Test to validate.' }));
+      await refreshHubProviders();
+    } catch (e: any) {
+      setHubMsg(prev => ({ ...prev, [id]: '' }));
+      setHubError(e.message);
+    }
+    setOpBusy(id, false);
+  };
+
+  const testProvider = async (id: string) => {
+    setOpBusy(id, 'test');
+    try {
+      const data = await adminFetch(`providers/${encodeURIComponent(id)}/test`, 'POST');
+      setHubProviders(prev => prev.map(p => (p.id === id ? { ...p, ...data.provider } : p)));
+      setHubMsg(prev => ({ ...prev, [id]: `Test complete: ${data.provider.state}` }));
+    } catch (e: any) {
+      setHubError(e.message);
+    }
+    setOpBusy(id, false);
+  };
+
+  const toggleProvider = async (id: string, enable: boolean) => {
+    setOpBusy(id, true);
+    try {
+      await adminFetch(`providers/${encodeURIComponent(id)}/${enable ? 'enable' : 'disable'}`, 'POST');
+      await refreshHubProviders();
+    } catch (e: any) {
+      setHubError(e.message);
+    }
+    setOpBusy(id, false);
+  };
+
+  const createApiKey = async () => {
+    const name = newKeyName.trim();
+    if (!name) return;
+    setOpBusy('newkey', true);
+    try {
+      const data = await adminFetch('keys', 'POST', { name });
+      setIssuedKey({ key: data.key, keyId: data.keyId, name: data.name });
+      setNewKeyName('');
+      const keys = await adminFetch('keys');
+      setApiKeys(keys.keys || []);
+    } catch (e: any) {
+      setHubError(e.message);
+    }
+    setOpBusy('newkey', false);
+  };
+
+  const revokeApiKey = async (keyId: string) => {
+    try {
+      await adminFetch(`keys/${encodeURIComponent(keyId)}/revoke`, 'POST');
+      const keys = await adminFetch('keys');
+      setApiKeys(keys.keys || []);
+    } catch (e: any) {
+      setHubError(e.message);
+    }
+  };
+
   const load = async () => {
     try {
       const [h, p] = await Promise.all([
@@ -199,8 +315,170 @@ export function ForgeAIView() {
 
             <FadeUp delay={200}>
               <p className="text-xs mt-6 text-center" style={{ color: 'var(--text-muted)' }}>
-                Credentials are never displayed or transmitted. Add a provider key via <code>FORGEOS_&lt;ID&gt;_KEY</code> env var or <code>secrets/&lt;id&gt;.env</code> — then run a health check.
+                Provider keys can be added below in the Provider Hub, or via <code>FORGEOS_&lt;ID&gt;_KEY</code> env var / <code>secrets/&lt;id&gt;.env</code> on the gateway host.
               </p>
+            </FadeUp>
+
+            {/* Provider Hub — credential management, testing, API keys (desktop gateway) */}
+            <FadeUp delay={240}>
+              <GlassPanel className="mt-8">
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                  <div>
+                    <h3 className="font-bold text-lg" style={{ color: 'var(--text)' }}>Provider Hub</h3>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      Add provider credentials, test connections, and issue ForgeOS API keys.
+                      Managed through the desktop gateway — credentials never leave the server.
+                    </p>
+                  </div>
+                  <StatusPill status={hubOnline ? 'online' : 'offline'} />
+                </div>
+
+                {!hubOnline ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="password"
+                      value={adminToken}
+                      onChange={e => setAdminToken(e.target.value)}
+                      placeholder="Admin token (FORGEOS_ADMIN_TOKEN)"
+                      className="flex-1 min-w-[220px] px-3 py-2 rounded-xl text-sm"
+                      style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                    />
+                    <button onClick={connectHub} disabled={hubBusy || !adminToken}
+                            className="px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105 disabled:opacity-50"
+                            style={{ background: 'linear-gradient(135deg,#8b5cf6,#d946ef)', color: '#fff' }}>
+                      {hubBusy ? 'Connecting…' : 'Connect'}
+                    </button>
+                    {hubError && <p className="w-full text-xs" style={{ color: 'var(--error)' }}>{hubError}</p>}
+                    {!hubError && (
+                      <p className="w-full text-xs" style={{ color: 'var(--text-muted)' }}>
+                        The desktop gateway must be running. The admin token is kept in memory for this session only.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-3 mb-6">
+                      {hubProviders.map(p => (
+                        <div key={p.id} className="rounded-xl p-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                          <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-sm" style={{ color: 'var(--text)' }}>{p.label}</span>
+                              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                                    style={{
+                                      background: p.enabled ? 'color-mix(in srgb, var(--success) 12%, transparent)' : 'var(--surface)',
+                                      color: p.enabled ? 'var(--success)' : 'var(--text-muted)',
+                                      border: '1px solid var(--border)',
+                                    }}>
+                                {p.enabled ? (STATE_META[p.state]?.label || p.state) : 'Disabled'}
+                              </span>
+                              {!p.configured && p.requiresKey !== false && (
+                                <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: 'color-mix(in srgb, var(--warning) 12%, transparent)', color: 'var(--warning)' }}>
+                                  No key
+                                </span>
+                              )}
+                            </div>
+                            <button onClick={() => toggleProvider(p.id, !p.enabled)} disabled={!!busy[p.id]}
+                                    className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105 disabled:opacity-50"
+                                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}>
+                              {p.enabled ? 'Disable' : 'Enable'}
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <input
+                              type="password"
+                              value={keyInput[p.id] || ''}
+                              onChange={e => setKeyInput(prev => ({ ...prev, [p.id]: e.target.value }))}
+                              placeholder={`Paste ${p.label} API key`}
+                              className="flex-1 min-w-[200px] px-3 py-1.5 rounded-lg text-sm"
+                              style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                            />
+                            <button onClick={() => saveCredential(p.id)} disabled={!!busy[p.id] || !(keyInput[p.id] || '').trim()}
+                                    className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105 disabled:opacity-50"
+                                    style={{ background: 'linear-gradient(135deg,#8b5cf6,#d946ef)', color: '#fff' }}>
+                              {busy[p.id] === 'save' ? 'Saving…' : 'Save key'}
+                            </button>
+                            <button onClick={() => testProvider(p.id)} disabled={!!busy[p.id]}
+                                    className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105 disabled:opacity-50"
+                                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}>
+                              {busy[p.id] === 'test' ? 'Testing…' : 'Test'}
+                            </button>
+                          </div>
+                          {p.error && <p className="text-xs mt-1.5" style={{ color: 'var(--warning)' }}>{p.error}</p>}
+                          {hubMsg[p.id] && <p className="text-xs mt-1.5" style={{ color: 'var(--success)' }}>{hubMsg[p.id]}</p>}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* ForgeOS API keys */}
+                    <div className="rounded-xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                      <h4 className="font-bold text-sm mb-1" style={{ color: 'var(--text)' }}>
+                        <KeyRound className="inline h-4 w-4 mr-1" /> ForgeOS API Keys
+                      </h4>
+                      <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
+                        One key authenticates an app or Dot to ForgeOS AI — it never needs upstream provider keys.
+                        Keys are stored as hashes only; the plaintext is shown once.
+                      </p>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        <input
+                          value={newKeyName}
+                          onChange={e => setNewKeyName(e.target.value)}
+                          placeholder="Consumer name (e.g. Scout / God's Eye)"
+                          className="flex-1 min-w-[200px] px-3 py-1.5 rounded-lg text-sm"
+                          style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                        />
+                        <button onClick={createApiKey} disabled={!!busy['newkey'] || !newKeyName.trim()}
+                                className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105 disabled:opacity-50"
+                                style={{ background: 'linear-gradient(135deg,#8b5cf6,#d946ef)', color: '#fff' }}>
+                          {busy['newkey'] ? 'Creating…' : 'Create API key'}
+                        </button>
+                      </div>
+                      {issuedKey && (
+                        <div className="rounded-lg p-3 mb-3" style={{ background: 'color-mix(in srgb, var(--success) 10%, transparent)', border: '1px solid var(--success)' }}>
+                          <p className="text-xs font-bold mb-1" style={{ color: 'var(--success)' }}>
+                            Key created — copy it now, it will never be shown again:
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <code className="flex-1 text-xs font-mono break-all px-2 py-1 rounded" style={{ background: 'var(--surface)', color: 'var(--text)' }}>
+                              {issuedKey.key}
+                            </code>
+                            <button onClick={() => { navigator.clipboard?.writeText(issuedKey.key).catch(() => {}); }}
+                                    className="text-xs font-semibold px-3 py-1.5 rounded-lg shrink-0"
+                                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}>
+                              Copy
+                            </button>
+                            <button onClick={() => setIssuedKey(null)}
+                                    className="text-xs px-2 py-1.5 rounded-lg shrink-0" style={{ color: 'var(--text-muted)' }}>
+                              Dismiss
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      <div className="space-y-1.5">
+                        {apiKeys.map(k => (
+                          <div key={k.keyId} className="flex items-center justify-between gap-2 text-xs px-2 py-1.5 rounded-lg"
+                               style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                            <span style={{ color: 'var(--text)' }}>
+                              <span className="font-semibold">{k.name}</span>
+                              <span className="font-mono ml-2" style={{ color: 'var(--text-muted)' }}>{k.keyId.slice(0, 12)}…</span>
+                              {k.revoked && <span className="ml-2 px-1.5 py-0.5 rounded" style={{ background: 'color-mix(in srgb, var(--error) 12%, transparent)', color: 'var(--error)' }}>revoked</span>}
+                            </span>
+                            {!k.revoked && (
+                              <button onClick={() => revokeApiKey(k.keyId)}
+                                      className="font-semibold px-2.5 py-1 rounded-lg hover:scale-105 transition-all"
+                                      style={{ border: '1px solid var(--error)', color: 'var(--error)' }}>
+                                Revoke
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        {apiKeys.length === 0 && (
+                          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No API keys issued yet.</p>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </GlassPanel>
             </FadeUp>
           </>
         )}
