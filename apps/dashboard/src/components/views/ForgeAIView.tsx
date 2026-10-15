@@ -50,17 +50,52 @@ export function ForgeAIView() {
   const adminTokenInputRef = useRef<HTMLInputElement | null>(null);
   const keyInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  /** Clicking "No key" on a provider card scrolls to the Provider Hub and
-   *  focuses that provider's key input (or the admin-token input if locked). */
-  const jumpToKeyEntry = (providerId: string) => {
-    hubSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    // Wait for any pending render, then focus the right field.
-    window.setTimeout(() => {
-      const keyEl = keyInputRefs.current[providerId];
-      if (keyEl) { keyEl.focus(); return; }
-      adminTokenInputRef.current?.focus();
-    }, 450);
+  // --- Key popup modal: paste a key, validate against the real provider ---
+  const [keyModal, setKeyModal] = useState<string | null>(null);
+  const [modalKey, setModalKey] = useState('');
+  const [modalBusy, setModalBusy] = useState(false);
+  const [modalResult, setModalResult] = useState<null | {
+    valid: boolean; modelCount: number | null; latencyMs: number; error: string | null; detail: string | null;
+  }>(null);
+
+  const openKeyModal = (providerId: string) => {
+    setKeyModal(providerId);
+    setModalKey('');
+    setModalResult(null);
+    setModalBusy(false);
   };
+  const closeKeyModal = () => { setKeyModal(null); setModalKey(''); setModalResult(null); };
+
+  const validateModalKey = async () => {
+    if (!keyModal || !modalKey.trim()) return;
+    const token = adminToken.trim();
+    if (!token) {
+      setModalResult({ valid: false, modelCount: null, latencyMs: 0, error: 'Enter the admin token above first, then validate.', detail: null });
+      return;
+    }
+    setModalBusy(true);
+    setModalResult(null);
+    try {
+      const res = await fetch('/api/forgeos-ai/providers/test-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ providerId: keyModal, key: modalKey }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setModalResult({ valid: false, modelCount: null, latencyMs: 0, error: data.error || `HTTP ${res.status}`, detail: null });
+      } else {
+        setModalResult(data);
+      }
+    } catch {
+      setModalResult({ valid: false, modelCount: null, latencyMs: 0, error: 'Network error reaching the validation service.', detail: null });
+    } finally {
+      setModalBusy(false);
+    }
+  };
+
+  const modalProvider = providers.find(p => p.id === keyModal) || null;
+  const modalEnvVar = keyModal ? `FORGEOS_${keyModal.toUpperCase().replace(/-/g, '_')}_KEY` : '';
 
   const adminFetch = async (path: string, method = 'GET', body?: any) => {
     const res = await fetch(`/api/forgeos-ai/admin/${path}`, {
@@ -232,7 +267,7 @@ export function ForgeAIView() {
                     : 'The ForgeOS AI gateway is not running on this machine.'}
                 </p>
               </div>
-              <StatusPill status={gatewayOnline ? (connected > 0 ? 'online' : 'busy') : 'offline'} />
+              <StatusPill status={gatewayOnline ? (connected > 0 ? 'online' : 'setup') : 'offline'} />
               {gatewayOnline && (
                 <button onClick={runChecks} disabled={checking}
                         className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105 disabled:opacity-50"
@@ -311,8 +346,8 @@ export function ForgeAIView() {
                           <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Models</p>
                         </div>
                         <button
-                          onClick={() => jumpToKeyEntry(p.id)}
-                          title={p.configured ? 'Manage key in Provider Hub' : 'Add API key in Provider Hub'}
+                          onClick={() => openKeyModal(p.id)}
+                          title={p.configured ? 'Check or replace key' : 'Add API key'}
                           className="rounded-lg py-2 w-full transition-all hover:scale-[1.03] cursor-pointer"
                           style={{ background: 'var(--surface)', border: p.configured ? '1px solid transparent' : '1px dashed var(--warning)' }}>
                           <p className="text-sm font-bold" style={{ color: p.configured ? 'var(--success)' : 'var(--warning)' }}>
@@ -547,6 +582,89 @@ export function ForgeAIView() {
           </>
         )}
       </div>
+
+      {/* API key popup modal */}
+      {keyModal && modalProvider && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+             style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+             onClick={closeKeyModal}>
+          <div className="w-full max-w-md rounded-2xl p-6"
+               style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}
+               onClick={e => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-1">
+              <h3 className="font-bold text-lg" style={{ color: 'var(--text)' }}>
+                <KeyRound className="inline h-5 w-5 mr-2" style={{ color: 'var(--warning)' }} />
+                {modalProvider.label} API key
+              </h3>
+              <button onClick={closeKeyModal} className="text-xl leading-none px-2"
+                      style={{ color: 'var(--text-muted)' }} aria-label="Close">×</button>
+            </div>
+            <p className="text-xs mb-4" style={{ color: 'var(--text-secondary)' }}>
+              Paste the key, then <b>Check</b> validates it against the real {modalProvider.label} API —
+              actual connection status and model count, no guessing.
+            </p>
+            {!adminToken && (
+              <input
+                type="password"
+                value={adminToken}
+                onChange={e => setAdminToken(e.target.value)}
+                placeholder="Admin token (required to validate)"
+                className="w-full px-3 py-2 rounded-xl text-sm mb-2"
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
+              />
+            )}
+            <input
+              type="password"
+              value={modalKey}
+              onChange={e => { setModalKey(e.target.value); setModalResult(null); }}
+              placeholder={`Paste ${modalProvider.label} API key`}
+              autoFocus
+              className="w-full px-3 py-2 rounded-xl text-sm font-mono"
+              style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
+              onKeyDown={e => { if (e.key === 'Enter') validateModalKey(); }}
+            />
+            <button onClick={validateModalKey} disabled={modalBusy || !modalKey.trim()}
+                    className="w-full mt-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] disabled:opacity-50"
+                    style={{ background: 'linear-gradient(135deg,#8b5cf6,#d946ef)', color: '#fff' }}>
+              {modalBusy ? 'Checking…' : 'Check key'}
+            </button>
+
+            {modalResult && (
+              <div className="mt-4 rounded-xl p-3 text-sm"
+                   style={{
+                     background: modalResult.valid ? 'color-mix(in srgb, var(--success) 10%, transparent)' : 'color-mix(in srgb, var(--error) 10%, transparent)',
+                     border: `1px solid ${modalResult.valid ? 'var(--success)' : 'var(--error)'}`,
+                   }}>
+                {modalResult.valid ? (
+                  <>
+                    <p className="font-bold" style={{ color: 'var(--success)' }}>
+                      ✓ Connected{modalResult.modelCount != null ? ` — ${modalResult.modelCount} models` : ''}
+                    </p>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                      {modalResult.detail} · {modalResult.latencyMs}ms
+                    </p>
+                    <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
+                      To activate on this deployment, set{' '}
+                      <code className="font-mono px-1 rounded" style={{ background: 'var(--surface)' }}>{modalEnvVar}</code>{' '}
+                      as a Vercel env var (Production) and redeploy — or save it in the Provider Hub below once the desktop gateway is reachable.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-bold" style={{ color: 'var(--error)' }}>✗ {modalResult.error || 'Validation failed'}</p>
+                    {modalResult.detail && (
+                      <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{modalResult.detail}</p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+            <p className="text-[11px] mt-3" style={{ color: 'var(--text-muted)' }}>
+              The key is sent only to {modalProvider.label} for validation — never stored, never logged.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
