@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { execSync } from 'child_process';
+import { execSync, execFileSync } from 'child_process';
 import { existsSync } from 'fs';
 import { join } from 'path';
+import { checkAdmin } from '@/lib/forgeos-ai/admin-auth';
 
 /**
  * ForgeOS One-Click Publish API
@@ -31,6 +32,20 @@ function run(cmd: string, cwd: string = REPO_ROOT): string {
     return execSync(cmd, { cwd, encoding: 'utf-8', timeout: 30000 }).trim();
   } catch (e: any) {
     throw new Error(`Command failed: ${cmd}\n${e.message}`);
+  }
+}
+
+/**
+ * Validate commit message to prevent abuse.
+ * Allows reasonable commit messages; rejects control characters and excessive length.
+ */
+function validateCommitMessage(message: string): void {
+  if (typeof message !== 'string' || message.length === 0 || message.length > 500) {
+    throw new Error('Invalid commit message: must be 1-500 characters');
+  }
+  // Reject control characters (except newline/tab which git handles)
+  if (/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(message)) {
+    throw new Error('Invalid commit message: contains control characters');
   }
 }
 
@@ -128,7 +143,10 @@ async function executePublish(message: string): Promise<any> {
   const status = await getStatus();
   if (status.hasChanges) {
     run('git add -A');
-    run(`git commit -m "${message.replace(/"/g, '\\"')}"`);
+    // SECURITY: Use execFileSync with args array to prevent shell injection
+    // via the user-controlled commit message. Never interpolate into shell.
+    validateCommitMessage(message);
+    execFileSync('git', ['commit', '-m', message], { cwd: REPO_ROOT, encoding: 'utf-8', timeout: 30000 });
     log.push('✓ Changes committed');
   } else {
     log.push('No changes to commit');
@@ -136,8 +154,12 @@ async function executePublish(message: string): Promise<any> {
   
   // 3. Push
   const branch = run('git branch --show-current');
+  // SECURITY: Validate branch name to prevent injection (server-side value, defense in depth)
+  if (!/^[a-zA-Z0-9._\-\/]+$/.test(branch)) {
+    throw new Error(`Invalid branch name: ${branch}`);
+  }
   log.push(`Pushing to origin/${branch}...`);
-  run(`git push origin ${branch}`);
+  execFileSync('git', ['push', 'origin', branch], { cwd: REPO_ROOT, encoding: 'utf-8', timeout: 60000 });
   log.push('✓ Pushed to GitHub');
   
   // 4. Get commit SHA
@@ -147,7 +169,10 @@ async function executePublish(message: string): Promise<any> {
   return { success: true, sha, branch, log };
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Admin authentication required' }, { status: 403 });
+  }
   try {
     const status = await getStatus();
     return NextResponse.json(status);
@@ -157,6 +182,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Admin authentication required' }, { status: 403 });
+  }
   try {
     const { message = 'ForgeOS one-click publish' } = await req.json();
     const result = await executePublish(message);
