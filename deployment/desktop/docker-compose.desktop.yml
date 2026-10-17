@@ -1,0 +1,75 @@
+# ForgeOS Desktop Migration — Docker Compose Override
+# 
+# SECURITY: Tailscale-only access. Do NOT expose via Cloudflare Tunnel
+# until the auth gaps in SECURITY_FIXES_REQUIRED.md are resolved.
+#
+# Architecture:
+# - Dashboard (Docker, port 3456) → Gateway (host process, port 8788)
+# - Dashboard reaches gateway via host.docker.internal (Docker Desktop)
+# - Ports bound to 127.0.0.1 only — Tailscale provides remote access
+# - Vercel deployment remains live as rollback (do not delete)
+#
+# Usage on desktop-fkjdg5q:
+#   1. Copy .env.desktop.template to .env.desktop, fill in values
+#   2. docker compose -f docker-compose.yml -f docker-compose.desktop.yml --env-file .env.desktop up -d --build
+#   3. Verify: http://100.104.110.68:3456 (via Tailscale)
+
+services:
+  dashboard:
+    build:
+      context: ./apps/dashboard
+      dockerfile: Dockerfile
+    # Bind to localhost only — remote access via Tailscale (100.104.110.68)
+    # Do NOT change to 0.0.0.0:3456 until security review passes
+    ports:
+      - "127.0.0.1:3456:3456"
+    environment:
+      # Gateway: host process on desktop, reachable via Docker Desktop DNS
+      - FORGEOS_AI_ENDPOINT=http://host.docker.internal:8788
+      - OLLAMA_ENDPOINT=http://host.docker.internal:11434
+      # --- Fill from .env.desktop (never commit values) ---
+      - FORGEOS_ADMIN_TOKEN=${FORGEOS_ADMIN_TOKEN}
+      - FORGEOS_GATEWAY_ADMIN_TOKEN=${FORGEOS_GATEWAY_ADMIN_TOKEN}
+      - FORGEOS_MYDOTS_KEY=${FORGEOS_MYDOTS_KEY}
+      - FORGEOS_PINDROP_KEY=${FORGEOS_PINDROP_KEY}
+      - FORGEOS_POSITION_AI_KEY=${FORGEOS_POSITION_AI_KEY}
+      - FORGEOS_QUANT_KEY=${FORGEOS_QUANT_KEY}
+      - GOVERNOR_API_TOKEN=${GOVERNOR_API_TOKEN}
+      - FORGEOS_OPENROUTER_KEY=${FORGEOS_OPENROUTER_KEY:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - MEDIUM_TOKEN=${MEDIUM_TOKEN:-}
+      - PINTEREST_ACCESS_TOKEN=${PINTEREST_ACCESS_TOKEN:-}
+    volumes:
+      - forgeos-data:/forgeos/data
+      - forgeos-config:/forgeos/config
+    restart: unless-stopped
+    networks:
+      - forgeos-net
+    # Health check: dashboard must respond before marked healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3456/api/forgeos-ai/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Ollama: optional — uncomment if running Ollama in Docker instead of host
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   ports:
+  #     - "127.0.0.1:11434:11434"
+  #   volumes:
+  #     - ollama-data:/root/.ollama
+  #   restart: unless-stopped
+  #   networks:
+  #     - forgeos-net
+
+volumes:
+  forgeos-data:
+    driver: local
+  forgeos-config:
+    driver: local
+
+networks:
+  forgeos-net:
+    driver: bridge
