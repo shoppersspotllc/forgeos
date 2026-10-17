@@ -72,6 +72,9 @@ if ([string]::IsNullOrWhiteSpace($serviceKeys)) { throw 'FORGEOS_SERVICE_KEYS is
 $adminToken = Read-Secret '  FORGEOS_ADMIN_TOKEN (required)'
 if ([string]::IsNullOrWhiteSpace($adminToken)) { throw 'FORGEOS_ADMIN_TOKEN is required.' }
 
+$gwAdminToken = Read-Secret '  FORGEOS_GATEWAY_ADMIN_TOKEN (required for key issuance)'
+if ([string]::IsNullOrWhiteSpace($gwAdminToken)) { throw 'FORGEOS_GATEWAY_ADMIN_TOKEN is required.' }
+
 # --- 3. Start gateway ---
 Write-Host ''
 Write-Host '[3/3] Starting gateway on 127.0.0.1:8788...' -ForegroundColor Yellow
@@ -79,11 +82,12 @@ Write-Host '[3/3] Starting gateway on 127.0.0.1:8788...' -ForegroundColor Yellow
 $env:FORGEOS_OPENROUTER_KEY = $openrouterKey
 $env:FORGEOS_SERVICE_KEYS = $serviceKeys
 $env:FORGEOS_ADMIN_TOKEN = $adminToken
+$env:FORGEOS_GATEWAY_ADMIN_TOKEN = $gwAdminToken
 $env:PORT = '8788'
 $env:HOST = '127.0.0.1'
 
 # Clear from variables (still in env for the child process)
-$openrouterKey = $serviceKeys = $adminToken = $null
+$openrouterKey = $serviceKeys = $adminToken = $gwAdminToken = $null
 [GC]::Collect()
 
 Push-Location $GatewayDir
