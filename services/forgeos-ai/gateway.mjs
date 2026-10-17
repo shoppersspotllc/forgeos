@@ -376,6 +376,7 @@ const server = createServer(async (req, res) => {
 
     return json(res, 404, { error: 'Not found' });
   } catch (e) {
+    console.error('[gateway] Unhandled exception:', e);
     return json(res, 500, { error: 'Internal error' });
   }
 });
