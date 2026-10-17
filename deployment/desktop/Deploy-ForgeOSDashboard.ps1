@@ -18,7 +18,8 @@
 $ErrorActionPreference = 'Stop'
 
 $ExpectedCommit = '616680f'
-$RepoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = Split-Path -Parent (Split-Path -Parent $ScriptDir)
 $ComposeFile = Join-Path $RepoRoot 'docker-compose.desktop.yml'
 $EnvFile = Join-Path $RepoRoot '.env.desktop'
 

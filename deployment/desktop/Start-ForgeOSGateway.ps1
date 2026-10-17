@@ -14,7 +14,8 @@
 #>
 $ErrorActionPreference = 'Stop'
 
-$RepoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = Split-Path -Parent (Split-Path -Parent $ScriptDir)
 $GatewayDir = Join-Path $RepoRoot 'services\forgeos-ai'
 $GatewayScript = Join-Path $GatewayDir 'gateway.mjs'
 
