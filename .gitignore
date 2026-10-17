@@ -34,3 +34,5 @@ npm-debug.log*
 
 # Terminal sessions
 services/terminal/node_modules/
+
+.env.desktop

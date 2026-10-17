@@ -149,52 +149,52 @@ try {
 
 # --- 4. Write compose override ---
 Write-Host '[4/7] Writing Docker Compose override...' -ForegroundColor Yellow
-$composeYaml = @'
-services:
-  dashboard:
-    build:
-      context: ./apps/dashboard
-      dockerfile: Dockerfile
-    ports:
-      - "127.0.0.1:3456:3456"
-    environment:
-      - FORGEOS_AI_ENDPOINT=http://host.docker.internal:8788
-      - OLLAMA_ENDPOINT=http://host.docker.internal:11434
-      - FORGEOS_ADMIN_TOKEN=${FORGEOS_ADMIN_TOKEN}
-      - FORGEOS_GATEWAY_ADMIN_TOKEN=${FORGEOS_GATEWAY_ADMIN_TOKEN}
-      - FORGEOS_MYDOTS_KEY=${FORGEOS_MYDOTS_KEY}
-      - FORGEOS_PINDROP_KEY=${FORGEOS_PINDROP_KEY}
-      - FORGEOS_POSITION_AI_KEY=${FORGEOS_POSITION_AI_KEY}
-      - FORGEOS_QUANT_KEY=${FORGEOS_QUANT_KEY}
-      - GOVERNOR_API_TOKEN=${GOVERNOR_API_TOKEN}
-      - FORGEOS_OPENROUTER_KEY=${FORGEOS_OPENROUTER_KEY:-}
-      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
-      - MEDIUM_TOKEN=${MEDIUM_TOKEN:-}
-      - PINTEREST_ACCESS_TOKEN=${PINTEREST_ACCESS_TOKEN:-}
-    volumes:
-      - forgeos-data:/forgeos/data
-      - forgeos-config:/forgeos/config
-    restart: unless-stopped
-    networks:
-      - forgeos-net
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3456/api/forgeos-ai/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-volumes:
-  forgeos-data:
-    driver: local
-  forgeos-config:
-    driver: local
-
-networks:
-  forgeos-net:
-    driver: bridge
-'@
-$composeYaml | Out-File -FilePath $ComposeFile -Encoding utf8
+$composeYamlLines = @(
+  'services:',
+  '  dashboard:',
+  '    build:',
+  '      context: ./apps/dashboard',
+  '      dockerfile: Dockerfile',
+  '    ports:',
+  '      - "127.0.0.1:3456:3456"',
+  '    environment:',
+  '      - FORGEOS_AI_ENDPOINT=http://host.docker.internal:8788',
+  '      - OLLAMA_ENDPOINT=http://host.docker.internal:11434',
+  '      - FORGEOS_ADMIN_TOKEN=${FORGEOS_ADMIN_TOKEN}',
+  '      - FORGEOS_GATEWAY_ADMIN_TOKEN=${FORGEOS_GATEWAY_ADMIN_TOKEN}',
+  '      - FORGEOS_MYDOTS_KEY=${FORGEOS_MYDOTS_KEY}',
+  '      - FORGEOS_PINDROP_KEY=${FORGEOS_PINDROP_KEY}',
+  '      - FORGEOS_POSITION_AI_KEY=${FORGEOS_POSITION_AI_KEY}',
+  '      - FORGEOS_QUANT_KEY=${FORGEOS_QUANT_KEY}',
+  '      - GOVERNOR_API_TOKEN=${GOVERNOR_API_TOKEN}',
+  '      - FORGEOS_OPENROUTER_KEY=${FORGEOS_OPENROUTER_KEY:-}',
+  '      - GITHUB_TOKEN=${GITHUB_TOKEN:-}',
+  '      - MEDIUM_TOKEN=${MEDIUM_TOKEN:-}',
+  '      - PINTEREST_ACCESS_TOKEN=${PINTEREST_ACCESS_TOKEN:-}',
+  '    volumes:',
+  '      - forgeos-data:/forgeos/data',
+  '      - forgeos-config:/forgeos/config',
+  '    restart: unless-stopped',
+  '    networks:',
+  '      - forgeos-net',
+  '    healthcheck:',
+  '      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3456/api/forgeos-ai/health"]',
+  '      interval: 30s',
+  '      timeout: 10s',
+  '      retries: 3',
+  '      start_period: 60s',
+  '',
+  'volumes:',
+  '  forgeos-data:',
+  '    driver: local',
+  '  forgeos-config:',
+  '    driver: local',
+  '',
+  'networks:',
+  '  forgeos-net:',
+  '    driver: bridge'
+)
+$composeYamlLines | Out-File -FilePath $ComposeFile -Encoding utf8
 Write-Host '  docker-compose.desktop.yml written.' -ForegroundColor Green
 
 # --- 5. Build and start ---
